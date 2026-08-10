@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { Send, Users, AlertCircle, Loader2 } from 'lucide-react';
+import { Send, AlertCircle, Loader2 } from 'lucide-react';
 import type { RootState, AppDispatch } from '../store';
 import { sendNotification, resetNotificationState } from '../store/notificationSlice';
 

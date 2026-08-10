@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import { Search, Loader2, Edit, Trash2, X, CheckCircle } from 'lucide-react';
@@ -96,7 +96,6 @@ const UserList = () => {
           </thead>
           <tbody>
             {filteredUsers.map((user, index) => {
-              const isComplete = user.profile?.name && user.profile?.email;
               return (
                 <tr key={user.id} onClick={() => setViewingUser({ ...user, resolvedCode: user.userCode || `U-${String(index + 1).padStart(2, '0')}` })} style={{ cursor: 'pointer' }} className="hover-highlight">
                   <td style={{ textAlign: 'center', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{user.userCode || `U-${String(index + 1).padStart(2, '0')}`}</td>

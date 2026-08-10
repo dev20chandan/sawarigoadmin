@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { Loader2, Plus, Edit, Trash2, X, CheckCircle, Tag, Eye } from 'lucide-react';
 import { createPortal } from 'react-dom';
@@ -8,7 +8,7 @@ import { fetchCoupons, addCoupon, updateCoupon, deleteCoupon } from '../store/co
 
 const Coupons = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { coupons, loading, error } = useSelector((state: RootState) => state.coupons);
+  const { coupons, loading } = useSelector((state: RootState) => state.coupons);
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<any>(null);

@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useSelector } from 'react-redux';
-import { ChevronLeft, Loader2, Tag, Calendar, Users, Car, AlertCircle, Clock } from 'lucide-react';
+import { ChevronLeft, Tag, Calendar, Users, Car, AlertCircle, Clock } from 'lucide-react';
 import { SmartAvatar } from '../App';
 import type { RootState } from '../store';
 

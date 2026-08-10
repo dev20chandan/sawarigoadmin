@@ -3,7 +3,7 @@ import { API_BASE_URL } from '../config';
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Check, X, ArrowLeft, Loader, Trash2, Ban } from 'lucide-react';
+import { Check, X, ArrowLeft, Trash2, Ban } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { RootState, AppDispatch } from '../store';
 import { updateDriverStatus, updateDocumentStatus } from '../store/driverSlice';
@@ -210,7 +210,7 @@ const DriverDetails = () => {
                         disabled={!!docUpdating}
                         style={{ flex: 1, padding: '0.5rem', color: 'var(--danger)', borderColor: 'var(--danger)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                       >
-                        {docUpdating?.id === doc.id && docUpdating.status === 'REJECTED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <X size={16} />} Reject
+                        {docUpdating?.id === doc.id && docUpdating?.status === 'REJECTED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <X size={16} />} Reject
                       </button>
                       <button
                         onClick={() => updateDocStatus(doc.id, 'APPROVED')}
@@ -218,7 +218,7 @@ const DriverDetails = () => {
                         disabled={!!docUpdating}
                         style={{ flex: 1, padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                       >
-                        {docUpdating?.id === doc.id && docUpdating.status === 'APPROVED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <Check size={16} />} Approve
+                        {docUpdating?.id === doc.id && docUpdating?.status === 'APPROVED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <Check size={16} />} Approve
                       </button>
                     </div>
                   )}
@@ -357,7 +357,7 @@ const DriverDetails = () => {
                   disabled={!!docUpdating}
                   style={{ padding: '0.4rem 1.25rem', borderRadius: '50px', color: 'var(--danger)', borderColor: 'var(--danger)', background: 'transparent', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  {docUpdating?.id === previewDoc.id && docUpdating.status === 'REJECTED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : null} Reject
+                  {docUpdating?.id === previewDoc.id && docUpdating?.status === 'REJECTED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : null} Reject
                 </button>
 
                 <button
@@ -366,7 +366,7 @@ const DriverDetails = () => {
                   disabled={!!docUpdating || previewDoc.status === 'APPROVED'}
                   style={{ padding: '0.4rem 1.25rem', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  {docUpdating?.id === previewDoc.id && docUpdating.status === 'APPROVED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : null} {previewDoc.status === 'APPROVED' ? 'Approved' : 'Approve'}
+                  {docUpdating?.id === previewDoc.id && docUpdating?.status === 'APPROVED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : null} {previewDoc.status === 'APPROVED' ? 'Approved' : 'Approve'}
                 </button>
               </div>
             </div>

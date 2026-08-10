@@ -1,9 +1,8 @@
-import { API_BASE_URL } from '../config';
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, Check, X, FileText, ExternalLink, Loader2, Trash2, Edit, ArrowLeft } from 'lucide-react';
+import { Search, Check, X, Loader2, Trash2, Edit } from 'lucide-react';
 import { SmartAvatar } from '../App';
 import type { RootState, AppDispatch } from '../store';
 import { fetchDrivers, deleteDriver, updateDriver, addDriver, updateDriverStatus } from '../store/driverSlice';
@@ -11,7 +10,7 @@ import axiosInstance from '../utils/axiosInstance';
 
 const DriverVerification = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { drivers, loading, error } = useSelector((state: RootState) => state.drivers);
+  const { drivers, loading } = useSelector((state: RootState) => state.drivers);
   const [selectedDriver, setSelectedDriver] = useState<any>(null); // Kept for API integration if needed, but navigation used instead for row clicks
   const navigate = useNavigate();
   const { state } = useLocation();
@@ -95,9 +94,7 @@ const DriverVerification = () => {
   const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
   const paginatedDrivers = filteredDrivers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
-  const handleUpdateStatus = (id: string, status: string) => {
-    setStatusToUpdate({ id, status });
-  };
+
 
   const confirmStatusUpdate = async () => {
     if (!statusToUpdate) return;

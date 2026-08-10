@@ -17,7 +17,7 @@ const availablePages = [
 const CmsFaq = () => {
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const { faqs, loading, error } = useSelector((state: RootState) => state.cms);
+  const { faqs, loading } = useSelector((state: RootState) => state.cms);
 
   const [openFaqId, setOpenFaqId] = useState<string | null>(null);
 
