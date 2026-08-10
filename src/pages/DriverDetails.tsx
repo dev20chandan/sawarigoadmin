@@ -141,6 +141,7 @@ const DriverDetails = () => {
               {[...driver.rawDocs].sort((a: any, b: any) => {
                 const order = [
                   'SELFIE',
+                  'AADHAAR', 'AADHAAR_FRONT', 'AADHAAR_BACK',
                   'AADHAR', 'AADHAR_FRONT', 'AADHAR_BACK',
                   'DRIVING_LICENSE', 'DRIVING_LICENSE_FRONT', 'DL_FRONT', 'DRIVING_LICENSE_BACK', 'DL_BACK',
                   'RC', 'RC_FRONT', 'RC_BACK',
