@@ -149,7 +149,7 @@ const DriverVerification = () => {
         <table>
           <thead>
             <tr>
-              <th style={{ width: '60px', textAlign: 'center', whiteSpace: 'nowrap' }}>Cap. Code</th>
+              <th style={{ width: '60px', textAlign: 'center', whiteSpace: 'nowrap' }}>Dr Code</th>
               <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
               <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Driver Name</th>
               <th style={{ textAlign: 'center' }}>Email</th>
@@ -184,28 +184,28 @@ const DriverVerification = () => {
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
                       {driver.status?.toUpperCase() === 'APPROVED' && (
-                        <button onClick={(e) => { 
-                          e.stopPropagation(); 
-                          setEditingDriver(driver); 
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingDriver(driver);
                           const docsRecord: Record<string, string> = {};
                           if (driver.rawDocs) {
                             driver.rawDocs.forEach((d: any) => { docsRecord[d.documentType] = d.fileUrl; });
                           }
-                          setFormData({ 
-                            name: driver.name || '', 
-                            phoneNumber: (driver.phone || driver.phoneNumber || '').replace(/^\+91/, ''), 
-                            email: driver.profile?.email || '',  
-                            gender: driver.profile?.gender || 'Male', 
-                            vehicleBrand: driver.vehicleDetails?.brand || '', 
-                            vehicleModel: driver.vehicleDetails?.model || '', 
-                            vehicleYear: driver.vehicleDetails?.year || '', 
-                            vehicleType: driver.vehicleDetails?.type || 'CAR', 
-                            vehiclePlate: driver.vehicleDetails?.plateNumber || '', 
-                            documents: docsRecord, 
-                            latitude: driver.latitude || '', 
-                            longitude: driver.longitude || '' 
-                          }); 
-                          setIsModalOpen(true); 
+                          setFormData({
+                            name: driver.name || '',
+                            phoneNumber: (driver.phone || driver.phoneNumber || '').replace(/^\+91/, ''),
+                            email: driver.profile?.email || '',
+                            gender: driver.profile?.gender || 'Male',
+                            vehicleBrand: driver.vehicleDetails?.brand || '',
+                            vehicleModel: driver.vehicleDetails?.model || '',
+                            vehicleYear: driver.vehicleDetails?.year || '',
+                            vehicleType: driver.vehicleDetails?.type || 'CAR',
+                            vehiclePlate: driver.vehicleDetails?.plateNumber || '',
+                            documents: docsRecord,
+                            latitude: driver.latitude || '',
+                            longitude: driver.longitude || ''
+                          });
+                          setIsModalOpen(true);
                         }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} title="Edit Driver">
                           <Edit size={16} />
                         </button>
