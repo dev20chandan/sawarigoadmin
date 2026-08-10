@@ -25,8 +25,8 @@ const DriverDetails = () => {
   const [docRejectReason, setDocRejectReason] = useState<string>('');
 
   React.useEffect(() => {
-     // Optional: If we want to deep reload, we could trigger fetchDrivers() 
-     // but the list is actively cached in Redux, so it's already fast and fresh.
+    // Optional: If we want to deep reload, we could trigger fetchDrivers() 
+    // but the list is actively cached in Redux, so it's already fast and fresh.
   }, [state?.driver?.id]);
 
   if (!driver) {
@@ -46,20 +46,20 @@ const DriverDetails = () => {
     if (!statusToUpdate || !driver) return;
     try {
       if (statusToUpdate.status === 'rejected' && rejectReason) {
-         await axiosInstance.post(`/admin/drivers/${statusToUpdate.id}/status`, { status: statusToUpdate.status, reason: rejectReason });
+        await axiosInstance.post(`/admin/drivers/${statusToUpdate.id}/status`, { status: statusToUpdate.status, reason: rejectReason });
       } else {
-         await dispatch(updateDriverStatus({ id: statusToUpdate.id, status: statusToUpdate.status })).unwrap();
+        await dispatch(updateDriverStatus({ id: statusToUpdate.id, status: statusToUpdate.status })).unwrap();
       }
-      
+
       setToastMessage({
         text: `Driver successfully ${statusToUpdate.status}`,
         type: statusToUpdate.status === 'rejected' ? 'danger' : 'success'
       });
       setTimeout(() => setToastMessage(null), 3000);
-      
+
       setStatusToUpdate(null);
       setRejectReason('');
-      
+
       // Optionally navigate back after approval
       if (statusToUpdate.status === 'approved') {
         setTimeout(() => navigate('/drivers'), 1000);
@@ -74,7 +74,7 @@ const DriverDetails = () => {
 
   const updateDocStatus = async (docId: string, status: string, reason: string = '') => {
     if (!driver) return;
-    
+
     setDocUpdating({ id: docId, status });
     try {
       await dispatch(updateDocumentStatus({ driverId: driver.id, docId, status, reason })).unwrap();
@@ -140,13 +140,14 @@ const DriverDetails = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
               {[...driver.rawDocs].sort((a: any, b: any) => {
                 const order = [
-                  'SELFIE',
+                  'RC', 'RC_FRONT', 'RC_BACK',
+                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
+                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
                   'AADHAAR', 'AADHAAR_FRONT', 'AADHAAR_BACK',
                   'AADHAR', 'AADHAR_FRONT', 'AADHAR_BACK',
                   'DRIVING_LICENSE', 'DRIVING_LICENSE_FRONT', 'DL_FRONT', 'DRIVING_LICENSE_BACK', 'DL_BACK',
-                  'RC', 'RC_FRONT', 'RC_BACK',
                   'POLLUTION', 'POLLUTION_FRONT', 'POLLUTION_BACK',
-                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK'
+                  'SELFIE',
                 ];
                 const aType = (a.documentType || '').toUpperCase();
                 const bType = (b.documentType || '').toUpperCase();
@@ -169,14 +170,14 @@ const DriverDetails = () => {
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (window.confirm('Delete this document?')) {
-                                try {
-                                  await axiosInstance.delete(`/admin/drivers/${driver.id}/documents/${doc.id}`);
-                                  // Opt to refresh manually or let Redux do it if we map it
-                                  setToastMessage({ text: 'Document deleted! Please refresh.', type: 'success' });
-                                  setTimeout(() => setToastMessage(null), 3000);
-                                } catch (err) {
-                                  console.error(err);
-                                }
+                              try {
+                                await axiosInstance.delete(`/admin/drivers/${driver.id}/documents/${doc.id}`);
+                                // Opt to refresh manually or let Redux do it if we map it
+                                setToastMessage({ text: 'Document deleted! Please refresh.', type: 'success' });
+                                setTimeout(() => setToastMessage(null), 3000);
+                              } catch (err) {
+                                console.error(err);
+                              }
                             }
                           }}
                           style={{ background: 'var(--danger)', border: 'none', color: 'white', padding: '0.2rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: '0.5rem', opacity: 0.85, transition: 'opacity 0.2s' }}
@@ -233,7 +234,7 @@ const DriverDetails = () => {
           {(() => {
             const isSelfieUploaded = driver.rawDocs && driver.rawDocs.some((d: any) => d.documentType === 'SELFIE');
             const allDocsApproved = driver.rawDocs && driver.rawDocs.length > 0 && driver.rawDocs.every((d: any) => d.status === 'APPROVED');
-            
+
             return (
               <>
                 {!isSelfieUploaded ? (
@@ -266,8 +267,8 @@ const DriverDetails = () => {
                 {driver.status?.toUpperCase() !== 'APPROVED' && driver.status?.toUpperCase() !== 'SUSPENDED' && (
                   <button
                     className="btn btn-primary"
-                    style={{ 
-                      padding: '0.6rem 2rem', 
+                    style={{
+                      padding: '0.6rem 2rem',
                       fontSize: '1rem',
                       opacity: 1,
                       cursor: 'pointer'
@@ -301,8 +302,8 @@ const DriverDetails = () => {
             {statusToUpdate.status === 'rejected' && (
               <div style={{ marginBottom: '1.5rem', textAlign: 'left' }}>
                 <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-main)', fontWeight: 500 }}>Select Rejection Reason:</label>
-                <select 
-                  value={rejectReason} 
+                <select
+                  value={rejectReason}
                   onChange={(e) => setRejectReason(e.target.value)}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', outline: 'none' }}
                 >
@@ -324,16 +325,16 @@ const DriverDetails = () => {
               </div>
             )}
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button 
-                onClick={() => { setStatusToUpdate(null); setRejectReason(''); }} 
-                className="btn btn-outline" 
+              <button
+                onClick={() => { setStatusToUpdate(null); setRejectReason(''); }}
+                className="btn btn-outline"
                 style={{ flex: 1, padding: '0.75rem' }}
               >
                 Cancel
               </button>
-              <button 
-                onClick={confirmStatusUpdate} 
-                className="btn" 
+              <button
+                onClick={confirmStatusUpdate}
+                className="btn"
                 style={{ flex: 1, padding: '0.75rem', background: statusToUpdate.status === 'approved' ? 'var(--success)' : statusToUpdate.status === 'suspended' ? '#f59e0b' : 'var(--danger)', color: 'white' }}
               >
                 Confirm
@@ -428,16 +429,16 @@ const DriverDetails = () => {
               style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', marginBottom: '1.5rem', resize: 'vertical' }}
             />
             <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-              <button 
-                onClick={() => { setDocRejectModal(null); setDocRejectReason(''); }} 
-                className="btn btn-outline" 
+              <button
+                onClick={() => { setDocRejectModal(null); setDocRejectReason(''); }}
+                className="btn btn-outline"
                 style={{ padding: '0.6rem 1.5rem' }}
               >
                 Cancel
               </button>
-              <button 
-                onClick={() => updateDocStatus(docRejectModal, 'REJECTED', docRejectReason)} 
-                className="btn" 
+              <button
+                onClick={() => updateDocStatus(docRejectModal, 'REJECTED', docRejectReason)}
+                className="btn"
                 style={{ padding: '0.6rem 1.5rem', background: 'var(--danger)', color: 'white' }}
                 disabled={!docRejectReason.trim()}
               >
