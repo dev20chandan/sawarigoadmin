@@ -162,7 +162,7 @@ const CmsFaq = () => {
                   </div>
                   {openFaqId === faq.id && (
                     <div className="animate-fade-in" style={{ padding: '1.5rem', borderTop: 'var(--glass-border)', background: 'var(--input-bg)', color: 'var(--text-main)', wordBreak: 'break-word', display: 'flex', gap: '0.75rem', alignItems: 'baseline' }}>
-                      <span style={{ fontWeight: 600, color: 'var(--success)', whiteSpace: 'nowrap' }}>Ans.</span>
+                      <span style={{ fontWeight: 600, color: 'var(--success)', whiteSpace: 'nowrap' }}>A.</span>
                       <div dangerouslySetInnerHTML={{ __html: faq.answer }} style={{ flex: 1 }}></div>
                     </div>
                   )}
