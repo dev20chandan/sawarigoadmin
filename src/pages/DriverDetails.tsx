@@ -23,6 +23,7 @@ const DriverDetails = () => {
   const [rejectReason, setRejectReason] = useState<string>('');
   const [docRejectModal, setDocRejectModal] = useState<string | null>(null);
   const [docRejectReason, setDocRejectReason] = useState<string>('');
+  const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
   React.useEffect(() => {
     // Optional: If we want to deep reload, we could trigger fetchDrivers() 
@@ -44,6 +45,7 @@ const DriverDetails = () => {
 
   const confirmStatusUpdate = async () => {
     if (!statusToUpdate || !driver) return;
+    setIsUpdatingStatus(true);
     try {
       if (statusToUpdate.status === 'rejected' && rejectReason) {
         await axiosInstance.post(`/admin/drivers/${statusToUpdate.id}/status`, { status: statusToUpdate.status, reason: rejectReason });
@@ -69,6 +71,8 @@ const DriverDetails = () => {
       setToastMessage({ text: 'Failed to update driver status', type: 'danger' });
       setTimeout(() => setToastMessage(null), 3000);
       setStatusToUpdate(null);
+    } finally {
+      setIsUpdatingStatus(false);
     }
   };
 
@@ -336,8 +340,9 @@ const DriverDetails = () => {
                 onClick={confirmStatusUpdate}
                 className="btn"
                 style={{ flex: 1, padding: '0.75rem', background: statusToUpdate.status === 'approved' ? 'var(--success)' : statusToUpdate.status === 'suspended' ? '#f59e0b' : 'var(--danger)', color: 'white' }}
+                disabled={isUpdatingStatus}
               >
-                Confirm
+                {isUpdatingStatus ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent', margin: 'auto' }} className="animate-spin" /> : 'Confirm'}
               </button>
             </div>
           </div>
