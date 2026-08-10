@@ -177,8 +177,8 @@ const DriverVerification = () => {
                   <td style={{ textAlign: 'center' }}>{driver.profile?.email || '-'}</td>
                   <td style={{ textAlign: 'center' }}>{driver.vehicle}</td>
                   <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${driver.status}`}>
-                      {driver.status}
+                    <span className={`badge ${driver.status?.toLowerCase()}`} style={{ textTransform: 'capitalize' }}>
+                      {driver.status?.toLowerCase()}
                     </span>
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
