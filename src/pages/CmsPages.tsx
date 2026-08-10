@@ -30,11 +30,14 @@ const CmsPages = () => {
 
   useEffect(() => {
     // Fetch all pages if we haven't loaded them into the dictionary yet.
-    if (Object.keys(pages).length === 0 && !loading) {
+    if (Object.keys(pages).length === 0) {
       dispatch(fetchAllPages());
     }
+  }, [dispatch]);
+
+  useEffect(() => {
     setSaveSuccess(false);
-  }, [activeSlug, dispatch, pages, loading]);
+  }, [activeSlug]);
 
   useEffect(() => {
     const defaultTitle = availablePages.find(p => p.slug === activeSlug)?.title || 'Custom Page';
