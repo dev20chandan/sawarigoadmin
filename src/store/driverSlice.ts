@@ -111,12 +111,8 @@ const driverSlice = createSlice({
       })
       // Update Status
       .addCase(updateDriverStatus.fulfilled, (state, action) => {
-        const updated = action.payload;
-        // Either payload returns the entire driver or { message, driver }
-        const driverRecord = updated.driver || updated;
-        if (driverRecord?.id) {
-          state.drivers = state.drivers.map(d => (d.id === driverRecord.id ? driverRecord : d));
-        }
+        const { id, status } = action.meta.arg;
+        state.drivers = state.drivers.map(d => (d.id === id ? { ...d, status: status.toUpperCase() } : d));
       })
       // Update Document Status
       .addCase(updateDocumentStatus.fulfilled, (state, action) => {
