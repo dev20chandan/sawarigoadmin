@@ -220,7 +220,7 @@ const DriverDetails = () => {
                         disabled={!!docUpdating}
                         style={{ flex: 1, padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                       >
-                        {docUpdating?.id === doc.id && docUpdating?.status === 'APPROVED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <Check size={16} />} Approve
+                        {docUpdating?.id === doc.id && docUpdating?.status === 'APPROVED ALL' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <Check size={16} />} Approve
                       </button>
                     </div>
                   )}
@@ -264,7 +264,7 @@ const DriverDetails = () => {
                     <Ban size={20} /> Suspend
                   </button>
                 )}
-                {driver.status?.toUpperCase() !== 'APPROVED' && driver.status?.toUpperCase() !== 'SUSPENDED' && (
+                {driver.status?.toUpperCase() !== 'APPROVED' && driver.status?.toUpperCase() !== 'SUSPENDED' && isSelfieUploaded && (
                   <button
                     className="btn btn-primary"
                     style={{
@@ -276,7 +276,7 @@ const DriverDetails = () => {
                     onClick={() => handleUpdateStatus(driver.id, 'approved')}
                     title="Approve Driver and all Documents"
                   >
-                    <Check size={20} /> Approve
+                    <Check size={20} /> Approve All
                   </button>
                 )}
               </>
