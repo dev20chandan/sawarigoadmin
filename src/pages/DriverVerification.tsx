@@ -40,7 +40,8 @@ const DriverVerification = () => {
       AADHAR: ''
     } as Record<string, string>,
     latitude: '',
-    longitude: ''
+    longitude: '',
+    profileImage: ''
   });
 
   const handleFileUpload = async (e: any, docType: string) => {
@@ -54,10 +55,14 @@ const DriverVerification = () => {
       const res = await axiosInstance.post('/uploads/image', formDataBody, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      setFormData(prev => ({
-        ...prev,
-        documents: { ...prev.documents, [docType]: res.data.url }
-      }));
+      if (docType === 'PROFILE_IMAGE') {
+        setFormData(prev => ({ ...prev, profileImage: res.data.url }));
+      } else {
+        setFormData(prev => ({
+          ...prev,
+          documents: { ...prev.documents, [docType]: res.data.url }
+        }));
+      }
     } catch (err) {
       console.error('Upload failed', err);
     }
@@ -139,7 +144,7 @@ const DriverVerification = () => {
             <option value="REJECTED">Rejected</option>
             <option value="SUSPENDED">Suspended</option>
           </select>
-          <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => { setEditingDriver(null); setFormData({ name: '', phoneNumber: '', email: '', gender: 'Male', vehicleBrand: '', vehicleModel: '', vehicleYear: '', vehicleType: 'CAR', vehiclePlate: '', documents: { DRIVING_LICENSE: '', AADHAR: '' } as Record<string, string>, latitude: '', longitude: '' }); setIsModalOpen(true); }}>
+          <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => { setEditingDriver(null); setFormData({ name: '', phoneNumber: '', email: '', gender: 'Male', vehicleBrand: '', vehicleModel: '', vehicleYear: '', vehicleType: 'CAR', vehiclePlate: '', documents: { DRIVING_LICENSE: '', AADHAR: '' } as Record<string, string>, latitude: '', longitude: '', profileImage: '' }); setIsModalOpen(true); }}>
             + Add Driver
           </button>
         </div>
@@ -203,7 +208,8 @@ const DriverVerification = () => {
                             vehiclePlate: driver.vehicleDetails?.plateNumber || '',
                             documents: docsRecord,
                             latitude: driver.latitude || '',
-                            longitude: driver.longitude || ''
+                            longitude: driver.longitude || '',
+                            profileImage: driver.profile?.image || driver.image || ''
                           });
                           setIsModalOpen(true);
                         }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} title="Edit Driver">
@@ -282,17 +288,31 @@ const DriverVerification = () => {
               </button>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <input className="input" placeholder="Full Name" value={formData.name} onChange={e => { setFormData({ ...formData, name: e.target.value }); setFieldErrors({ ...fieldErrors, name: '' }); }} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: `1px solid ${fieldErrors.name ? 'var(--danger)' : 'var(--border)'}`, background: 'var(--input-bg)', color: 'var(--text-main)' }} />
-                {fieldErrors.name && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', marginLeft: '0.2rem' }}>{fieldErrors.name}</span>}
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ display: 'flex', alignItems: 'center', background: 'var(--input-bg)', borderRadius: '8px', border: `1px solid ${fieldErrors.phoneNumber ? 'var(--danger)' : 'var(--border)'}`, overflow: 'hidden' }}>
-                  <span style={{ padding: '0.8rem 0.5rem 0.8rem 1rem', color: 'var(--text-muted)' }}>+91</span>
-                  <input className="input" placeholder="Phone Number" value={formData.phoneNumber} onChange={e => { setFormData({ ...formData, phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 10) }); setFieldErrors({ ...fieldErrors, phoneNumber: '' }); }} style={{ width: '100%', padding: '0.8rem', paddingLeft: '0.5rem', background: 'transparent', border: 'none', color: 'var(--text-main)', outline: 'none' }} />
+            <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '1rem' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
+                <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--input-bg)', border: '1px dashed var(--border)', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}>
+                  {formData.profileImage ? (
+                    <img src={formData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>Upload Photo</div>
+                  )}
+                  <input type="file" accept="image/*" onChange={(e) => handleFileUpload(e, 'PROFILE_IMAGE')} style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} />
                 </div>
-                {fieldErrors.phoneNumber && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', marginLeft: '0.2rem' }}>{fieldErrors.phoneNumber}</span>}
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <input className="input" placeholder="Full Name" value={formData.name} onChange={e => { setFormData({ ...formData, name: e.target.value }); setFieldErrors({ ...fieldErrors, name: '' }); }} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: `1px solid ${fieldErrors.name ? 'var(--danger)' : 'var(--border)'}`, background: 'var(--input-bg)', color: 'var(--text-main)' }} />
+                  {fieldErrors.name && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', marginLeft: '0.2rem' }}>{fieldErrors.name}</span>}
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', background: 'var(--input-bg)', borderRadius: '8px', border: `1px solid ${fieldErrors.phoneNumber ? 'var(--danger)' : 'var(--border)'}`, overflow: 'hidden' }}>
+                    <span style={{ padding: '0.8rem 0.5rem 0.8rem 1rem', color: 'var(--text-muted)' }}>+91</span>
+                    <input className="input" placeholder="Phone Number" value={formData.phoneNumber} onChange={e => { setFormData({ ...formData, phoneNumber: e.target.value.replace(/\D/g, '').slice(0, 10) }); setFieldErrors({ ...fieldErrors, phoneNumber: '' }); }} style={{ width: '100%', padding: '0.8rem', paddingLeft: '0.5rem', background: 'transparent', border: 'none', color: 'var(--text-main)', outline: 'none' }} />
+                  </div>
+                  {fieldErrors.phoneNumber && <span style={{ color: 'var(--danger)', fontSize: '0.8rem', marginTop: '0.4rem', marginLeft: '0.2rem' }}>{fieldErrors.phoneNumber}</span>}
+                </div>
               </div>
             </div>
 
