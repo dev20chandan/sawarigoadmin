@@ -6,19 +6,21 @@ import { fetchRides } from '../store/rideSlice';
 
 const RideList = () => {
   const dispatch = useDispatch<AppDispatch>();
-  const { rides, loading, error } = useSelector((state: RootState) => state.rides);
+  const { rides, meta, loading, error } = useSelector((state: RootState) => state.rides);
   const [search, setSearch] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const limit = 5;
 
   useEffect(() => {
-    dispatch(fetchRides());
-  }, [dispatch]);
+    dispatch(fetchRides({ page: currentPage, limit }));
+  }, [dispatch, currentPage, limit]);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'COMPLETED': return <span className="badge active">Completed</span>;
       case 'PENDING': return <span className="badge pending">Pending</span>;
       case 'CANCELLED': return <span className="badge" style={{ background: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)', border: '1px solid var(--danger)' }}>Cancelled</span>;
-      case 'ACCEPTED': 
+      case 'ACCEPTED':
       case 'ARRIVED':
       case 'STARTED':
         return <span className="badge" style={{ background: 'rgba(59, 130, 246, 0.15)', color: 'var(--accent-primary)', border: '1px solid var(--accent-primary)' }}>{status}</span>;
@@ -26,8 +28,8 @@ const RideList = () => {
     }
   };
 
-  const filteredRides = rides.filter(ride => 
-    ride.rider?.phoneNumber.includes(search) || 
+  const filteredRides = rides.filter(ride =>
+    ride.rider?.phoneNumber.includes(search) ||
     (ride.driver?.phoneNumber && ride.driver.phoneNumber.includes(search)) ||
     ride.id.includes(search)
   );
@@ -48,9 +50,9 @@ const RideList = () => {
         <div style={{ display: 'flex', gap: '1rem' }}>
           <div className="form-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
             <Search size={18} color="var(--text-muted)" />
-            <input 
-              type="text" 
-              placeholder="Search by Phone or Ride ID..." 
+            <input
+              type="text"
+              placeholder="Search by Phone or Ride ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', outline: 'none', width: '250px' }}
@@ -86,10 +88,10 @@ const RideList = () => {
                 </td>
                 <td>
                   {ride.driver ? (
-                     <>
-                       <div>{ride.driver?.profile?.name || 'Unknown Driver'}</div>
-                       <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber}</div>
-                     </>
+                    <>
+                      <div>{ride.driver?.profile?.name || 'Unknown Driver'}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber}</div>
+                    </>
                   ) : (
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Awaiting Driver...</span>
                   )}
@@ -115,6 +117,33 @@ const RideList = () => {
           </tbody>
         </table>
       </div>
+
+      {/* Pagination Controls */}
+      {meta && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1.5rem', padding: '0 1rem' }}>
+          <div style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>
+            Showing page {meta.page} of {meta.totalPages} ({meta.total} total rides)
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem' }}>
+            <button
+              className="btn btn-outline"
+              disabled={meta.page <= 1}
+              onClick={() => setCurrentPage(prev => prev - 1)}
+              style={{ padding: '0.4rem 1rem' }}
+            >
+              Previous
+            </button>
+            <button
+              className="btn btn-outline"
+              disabled={meta.page >= meta.totalPages}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              style={{ padding: '0.4rem 1rem' }}
+            >
+              Next
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

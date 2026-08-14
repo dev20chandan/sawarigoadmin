@@ -120,6 +120,15 @@ body {
   gap: 0.25rem;
   flex: 1;
   margin-top: 0.5rem;
+  overflow-y: auto;
+}
+
+.nav-links::-webkit-scrollbar {
+  width: 4px;
+}
+.nav-links::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 4px;
 }
 
 .nav-item {

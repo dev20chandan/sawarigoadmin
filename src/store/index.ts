@@ -8,6 +8,8 @@ import notificationReducer from './notificationSlice';
 import couponReducer from './couponSlice';
 import cmsReducer from './cmsSlice';
 import settingsReducer from './settingsSlice';
+import cancellationReducer from './cancellationSlice';
+import supportReducer from './supportSlice';
 
 export const store = configureStore({
   reducer: {
@@ -20,6 +22,8 @@ export const store = configureStore({
     coupons: couponReducer,
     cms: cmsReducer,
     settings: settingsReducer,
+    cancellations: cancellationReducer,
+    support: supportReducer,
   },
 });
 

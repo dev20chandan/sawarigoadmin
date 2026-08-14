@@ -17,7 +17,13 @@ import CmsFaq from './pages/CmsFaq';
 import CmsPages from './pages/CmsPages';
 import Coupons from './pages/Coupons';
 import CouponDetails from './pages/CouponDetails';
-import { User, FileText, Tag } from 'lucide-react';
+import VehicleTypes from './pages/VehicleTypes';
+import RatingsAndReviews from './pages/RatingsAndReviews';
+import RideFareDetails from './pages/RideFareDetails';
+import CancellationRecords from './pages/CancellationRecords';
+import SupportRecords from './pages/SupportRecords';
+import WalletLedger from './pages/WalletLedger';
+import { User, FileText, Tag, Truck, Star, Ban, LifeBuoy, IndianRupee } from 'lucide-react';
 
 export const SmartAvatar = ({ src, name, size = 36, type = 'icon' }: { src?: string, name: string, size?: number, type?: 'initial' | 'icon' }) => {
   const [error, setError] = useState(false);
@@ -68,7 +74,7 @@ const TopBarUserWidget = ({ adminName, adminImage, onLogout, theme, toggleTheme 
   }, []);
 
   return (
-    <div ref={dropdownRef} style={{ position: 'fixed', top: '1.5rem', right: '2rem', zIndex: 100 }}>
+    <div ref={dropdownRef} style={{ position: 'absolute', top: '1.5rem', right: '2rem', zIndex: 100 }}>
       {/* Trigger */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
@@ -109,6 +115,12 @@ const Sidebar = () => {
     { name: 'Drivers', path: '/drivers', icon: <FileCheck size={20} /> },
     { name: 'Trip Activity', path: '/rides', icon: <RouteIcon size={20} /> },
     { name: 'Notifications', path: '/notifications', icon: <BellRing size={20} /> },
+    { name: 'Support', path: '/support', icon: <LifeBuoy size={20} /> },
+    { name: 'Vehicle Types', path: '/vehicle-types', icon: <Truck size={20} /> },
+    { name: 'Reviews', path: '/reviews', icon: <Star size={20} /> },
+    { name: 'Cancellations', path: '/cancellations', icon: <Ban size={20} /> },
+    { name: 'Fares List', path: '/ride-fares', icon: <FileText size={20} /> },
+    { name: 'Wallet Ledger', path: '/wallet-ledger', icon: <IndianRupee size={20} /> },
     { name: 'Coupons', path: '/coupons', icon: <Tag size={20} /> },
     { name: 'CMS', path: '/cms/pages', icon: <FileText size={20} /> },
   ];
@@ -180,6 +192,12 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
       case '/drivers': return 'Driver Management';
       case '/rides': return 'Trip Activity';
       case '/notifications': return 'Notifications';
+      case '/support': return 'Support Tickets';
+      case '/vehicle-types': return 'Vehicle Types Management';
+      case '/reviews': return 'Ratings & Reviews';
+      case '/cancellations': return 'Cancellation Records';
+      case '/ride-fares': return 'Ride Fares Overview';
+      case '/wallet-ledger': return 'Wallet & Financial Ledger';
       case '/cms/pages': return 'CMS - Pages';
       case '/cms/faqs': return 'CMS - FAQs';
       case '/coupons': return 'Coupon Management';
@@ -213,6 +231,12 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
           <Route path="/drivers/:id" element={needsSetup ? <Navigate to="/settings" /> : <DriverDetails />} />
           <Route path="/rides" element={needsSetup ? <Navigate to="/settings" /> : <RideList />} />
           <Route path="/notifications" element={needsSetup ? <Navigate to="/settings" /> : <Notifications />} />
+          <Route path="/support" element={needsSetup ? <Navigate to="/settings" /> : <SupportRecords />} />
+          <Route path="/vehicle-types" element={needsSetup ? <Navigate to="/settings" /> : <VehicleTypes />} />
+          <Route path="/reviews" element={needsSetup ? <Navigate to="/settings" /> : <RatingsAndReviews />} />
+          <Route path="/cancellations" element={needsSetup ? <Navigate to="/settings" /> : <CancellationRecords />} />
+          <Route path="/ride-fares" element={needsSetup ? <Navigate to="/settings" /> : <RideFareDetails />} />
+          <Route path="/wallet-ledger" element={needsSetup ? <Navigate to="/settings" /> : <WalletLedger />} />
           <Route path="/cms/pages" element={needsSetup ? <Navigate to="/settings" /> : <CmsPages />} />
           <Route path="/cms/faqs" element={needsSetup ? <Navigate to="/settings" /> : <CmsFaq />} />
           <Route path="/coupons" element={needsSetup ? <Navigate to="/settings" /> : <Coupons />} />

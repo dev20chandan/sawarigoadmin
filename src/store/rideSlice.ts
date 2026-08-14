@@ -3,20 +3,25 @@ import axiosInstance from '../utils/axiosInstance';
 
 export const fetchRides = createAsyncThunk(
   'rides/fetchRides',
-  async (_, { rejectWithValue }) => {
+  async ({ page = 1, limit = 10 }: { page?: number; limit?: number } = {}, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.get('/admin/rides');
+      const response = await axiosInstance.get(`/rides/history?page=${page}&limit=${limit}`);
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data || 'Failed to fetch rides');
     }
   }
 );
-
 const rideSlice = createSlice({
   name: 'rides',
   initialState: {
     rides: [] as any[],
+    meta: {
+      total: 0,
+      page: 1,
+      limit: 10,
+      totalPages: 1
+    },
     loading: false,
     error: null as string | null,
   },
@@ -29,7 +34,12 @@ const rideSlice = createSlice({
       })
       .addCase(fetchRides.fulfilled, (state, action) => {
         state.loading = false;
-        state.rides = action.payload;
+        if (action.payload?.data) {
+          state.rides = action.payload.data;
+          state.meta = action.payload.meta || state.meta;
+        } else {
+          state.rides = action.payload;
+        }
       })
       .addCase(fetchRides.rejected, (state, action) => {
         state.loading = false;

@@ -8,6 +8,7 @@ import { createPortal } from 'react-dom';
 import type { RootState, AppDispatch } from '../store';
 import { updateDriverStatus, updateDocumentStatus } from '../store/driverSlice';
 import axiosInstance from '../utils/axiosInstance';
+import DriverLocationHistory from '../components/DriverLocationHistory';
 
 const DriverDetails = () => {
   const { state } = useLocation();
@@ -24,10 +25,28 @@ const DriverDetails = () => {
   const [docRejectModal, setDocRejectModal] = useState<string | null>(null);
   const [docRejectReason, setDocRejectReason] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+  const [walletRecords, setWalletRecords] = useState<any[]>([]);
+  const [loadingWallet, setLoadingWallet] = useState(true);
+  const [walletError, setWalletError] = useState<string | null>(null);
 
   React.useEffect(() => {
-    // Optional: If we want to deep reload, we could trigger fetchDrivers() 
-    // but the list is actively cached in Redux, so it's already fast and fresh.
+    // Fetch wallet records for this specific driver
+    const fetchWallet = async () => {
+      if (!state?.driver?.id) return;
+      try {
+        setLoadingWallet(true);
+        const res = await axiosInstance.get(`/admin/drivers/${state.driver.id}/wallet`);
+        setWalletRecords(Array.isArray(res.data) ? res.data : []);
+        setWalletError(null);
+      } catch (err: any) {
+        console.error('Failed to fetch wallet:', err);
+        setWalletRecords([]); // Fallback
+        setWalletError(err.response?.data?.message || 'Wallet data not found');
+      } finally {
+        setLoadingWallet(false);
+      }
+    };
+    fetchWallet();
   }, [state?.driver?.id]);
 
   if (!driver) {
@@ -232,6 +251,66 @@ const DriverDetails = () => {
               ))}
             </div>
           )}
+        </div>
+
+        {/* GPS Location history tracker */}
+        <div style={{ marginTop: '2.5rem' }}>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Live GPS & Location History Tracker
+          </h3>
+          <DriverLocationHistory driverId={state?.driver?.id} />
+        </div>
+
+        <div style={{ marginTop: '2.5rem' }}>
+          <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            Driver Earnings & Wallet
+          </h3>
+          <div className="table-container" style={{ margin: 0, border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card)' }}>
+            <table style={{ width: '100%', minWidth: '1000px' }}>
+              <thead>
+                <tr style={{ background: 'var(--input-bg)' }}>
+                  <th>Driver ID</th>
+                  <th>Ride ID</th>
+                  <th>Credit</th>
+                  <th>Debit</th>
+                  <th>Recharge</th>
+                  <th>Withdrawal</th>
+                  <th>Refund/Adjustment</th>
+                  <th style={{ color: 'var(--text-main)' }}>Balance</th>
+                  <th>Transaction Date</th>
+                </tr>
+              </thead>
+              <tbody>
+                {loadingWallet ? (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '2rem' }}>Loading wallet records...</td>
+                  </tr>
+                ) : walletRecords.length === 0 ? (
+                  <tr>
+                    <td colSpan={9} style={{ textAlign: 'center', padding: '2rem', color: 'var(--text-muted)' }}>
+                      {walletError ? walletError : 'No wallet transactions found for this driver.'}
+                    </td>
+                  </tr>
+                ) : (
+                  walletRecords.map((txn, i) => (
+                    <tr key={txn.id || i} className="hover-highlight">
+                      <td style={{ fontFamily: 'monospace' }}>{txn.driverId?.substring(0,8) || driver.id?.substring(0,8)}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{txn.rideId?.substring(0,8) || '-'}</td>
+                      <td style={{ color: 'var(--success)', fontWeight: 600 }}>{txn.credit ? `+₹${txn.credit.toFixed(2)}` : '-'}</td>
+                      <td style={{ color: 'var(--danger)', fontWeight: 600 }}>{txn.debit ? `-₹${txn.debit.toFixed(2)}` : '-'}</td>
+                      <td>{txn.recharge ? `₹${txn.recharge.toFixed(2)}` : '-'}</td>
+                      <td>{txn.withdrawal ? `₹${txn.withdrawal.toFixed(2)}` : '-'}</td>
+                      <td>{txn.adjustment ? `₹${txn.adjustment.toFixed(2)}` : '-'}</td>
+                      <td style={{ fontWeight: 700, color: 'var(--text-main)' }}>₹{(txn.balance || 0).toFixed(2)}</td>
+                      <td style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        {txn.createdAt ? new Date(txn.createdAt).toLocaleString('en-IN') : 'N/A'}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
 
         <div style={{ paddingTop: '1.5rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center' }}>
