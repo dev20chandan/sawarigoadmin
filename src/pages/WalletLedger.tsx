@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Loader2, IndianRupee, ArrowUpRight, ArrowDownRight, RefreshCcw } from 'lucide-react';
+import { Search, Loader2, ArrowUpRight, ArrowDownRight, RefreshCcw } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import './RideFare.css'; 
 
