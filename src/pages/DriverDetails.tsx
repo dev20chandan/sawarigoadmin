@@ -164,12 +164,12 @@ const DriverDetails = () => {
               {[...driver.rawDocs].sort((a: any, b: any) => {
                 const order = [
                   'RC', 'RC_FRONT', 'RC_BACK',
-                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
-                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
                   'AADHAAR', 'AADHAAR_FRONT', 'AADHAAR_BACK',
                   'AADHAR', 'AADHAR_FRONT', 'AADHAR_BACK',
                   'DRIVING_LICENSE', 'DRIVING_LICENSE_FRONT', 'DL_FRONT', 'DRIVING_LICENSE_BACK', 'DL_BACK',
                   'POLLUTION', 'POLLUTION_FRONT', 'POLLUTION_BACK',
+                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
+                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
                   'SELFIE',
                 ];
                 const aType = (a.documentType || '').toUpperCase();
@@ -294,8 +294,8 @@ const DriverDetails = () => {
                 ) : (
                   walletRecords.map((txn, i) => (
                     <tr key={txn.id || i} className="hover-highlight">
-                      <td style={{ fontFamily: 'monospace' }}>{txn.driverId?.substring(0,8) || driver.id?.substring(0,8)}</td>
-                      <td style={{ fontFamily: 'monospace' }}>{txn.rideId?.substring(0,8) || '-'}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{txn.driverId?.substring(0, 8) || driver.id?.substring(0, 8)}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{txn.rideId?.substring(0, 8) || '-'}</td>
                       <td style={{ color: 'var(--success)', fontWeight: 600 }}>{txn.credit ? `+₹${txn.credit.toFixed(2)}` : '-'}</td>
                       <td style={{ color: 'var(--danger)', fontWeight: 600 }}>{txn.debit ? `-₹${txn.debit.toFixed(2)}` : '-'}</td>
                       <td>{txn.recharge ? `₹${txn.recharge.toFixed(2)}` : '-'}</td>
