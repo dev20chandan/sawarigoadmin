@@ -107,7 +107,8 @@ const driverSlice = createSlice({
       })
       // Update
       .addCase(updateDriver.fulfilled, (state, action) => {
-        state.drivers = state.drivers.map(d => (d.id === action.payload.id ? action.payload : d));
+        const updatedDriver = action.payload.data ? action.payload.data : action.payload;
+        state.drivers = state.drivers.map(d => (d.id === updatedDriver.id ? updatedDriver : d));
       })
       // Update Status
       .addCase(updateDriverStatus.fulfilled, (state, action) => {

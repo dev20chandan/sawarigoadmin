@@ -15,6 +15,7 @@ const DriverVerification = () => {
   const navigate = useNavigate();
   const { state } = useLocation();
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [editingDriver, setEditingDriver] = useState<any>(null);
   const [driverToDelete, setDriverToDelete] = useState<string | null>(null);
   const [statusToUpdate, setStatusToUpdate] = useState<{ id: string, status: string } | null>(null);
@@ -392,7 +393,7 @@ const DriverVerification = () => {
 
             <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem' }}>
               <button className="btn" style={{ flex: 1, background: 'var(--input-bg)', color: 'var(--text-main)' }} onClick={() => { setIsModalOpen(false); setFieldErrors({}); }}>Cancel</button>
-              <button className="btn btn-primary" style={{ flex: 1 }} onClick={async () => {
+              <button disabled={isSaving} className="btn btn-primary" style={{ flex: 1, opacity: isSaving ? 0.7 : 1 }} onClick={async () => {
                 const errors: Record<string, string> = {};
 
                 if (!formData.name?.trim()) errors.name = 'Full Name is required';
@@ -423,6 +424,7 @@ const DriverVerification = () => {
                 const submitData = { ...formData, phoneNumber: `+91${formData.phoneNumber.trim()}`, documents: formattedDocs };
 
                 try {
+                  setIsSaving(true);
                   if (editingDriver) {
                     await dispatch(updateDriver({ id: editingDriver.id, data: submitData })).unwrap();
                   } else {
@@ -431,9 +433,11 @@ const DriverVerification = () => {
                   setIsModalOpen(false);
                 } catch (err) {
                   console.error('Failed to save driver:', err);
+                } finally {
+                  setIsSaving(false);
                 }
               }}>
-                {editingDriver ? 'Update' : 'Create'}
+                {isSaving ? <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}><Loader2 className="animate-spin" size={18} /> Saving...</div> : (editingDriver ? 'Update' : 'Create')}
               </button>
             </div>
           </div>
