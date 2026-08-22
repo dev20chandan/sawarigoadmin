@@ -1,8 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Loader2, Eye, Trash2, Mail, CheckCircle, Clock, X } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
 import { createPortal } from 'react-dom';
-import { SmartAvatar } from '../App';
 
 export default function Contacts() {
   const [contacts, setContacts] = useState<any[]>([]);
@@ -331,9 +330,7 @@ export default function Contacts() {
                 Mark Replied
               </button>
               <button 
-                onClick={(e) => { 
-                  setContactToDelete(activeContact.id);
-                }} 
+                onClick={() => setContactToDelete(activeContact.id)} 
                 className="btn btn-outline" 
                 style={{ flex: 1, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
               >
