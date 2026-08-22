@@ -105,9 +105,6 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
           </button>
         </form>
 
-        <div style={{ marginTop: '1.5rem', fontSize: '0.8rem', color: 'var(--text-muted)' }}>
-          Hint: Use <strong style={{ color: 'var(--text-main)' }}>admin</strong> / <strong style={{ color: 'var(--text-main)' }}>admin123</strong>
-        </div>
       </div>
 
       <style>{`

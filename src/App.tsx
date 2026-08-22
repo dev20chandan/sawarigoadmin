@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation, Navigate, useNavigate 
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from './store';
 import { fetchProfile } from './store/settingsSlice';
-import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, Car, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, Car, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon, Menu, X } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import UserList from './pages/UserList';
 import DriverVerification from './pages/DriverVerification';
@@ -74,7 +74,7 @@ const TopBarUserWidget = ({ adminName, adminImage, onLogout, theme, toggleTheme 
   }, []);
 
   return (
-    <div ref={dropdownRef} style={{ position: 'absolute', top: '1.5rem', right: '2rem', zIndex: 100 }}>
+    <div ref={dropdownRef} className="top-widget-container" style={{ position: 'absolute', top: '1.5rem', right: '2rem', zIndex: 100 }}>
       {/* Trigger */}
       <div 
         onClick={() => setIsOpen(!isOpen)}
@@ -106,7 +106,7 @@ const TopBarUserWidget = ({ adminName, adminImage, onLogout, theme, toggleTheme 
   );
 };
 
-const Sidebar = () => {
+const Sidebar = ({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: boolean, setIsMobileOpen: (o: boolean) => void }) => {
   const location = useLocation();
 
   const links = [
@@ -126,11 +126,18 @@ const Sidebar = () => {
   ];
 
   return (
-    <div className="sidebar">
-      <Link to="/" className="brand">
-        <Car size={32} />
-        Sawarigo
-      </Link>
+    <>
+      <div className={`mobile-overlay ${isMobileOpen ? 'active' : ''}`} onClick={() => setIsMobileOpen(false)}></div>
+      <div className={`sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Link to="/" className="brand" onClick={() => setIsMobileOpen(false)}>
+            <Car size={32} />
+            Sawarigo
+          </Link>
+          <button className="mobile-menu-btn" onClick={() => setIsMobileOpen(false)} style={{ display: isMobileOpen ? 'block' : 'none' }}>
+            <X size={24} />
+          </button>
+        </div>
       <div className="nav-links">
         {links.map((link) => (
           <Link
@@ -141,13 +148,15 @@ const Sidebar = () => {
               (link.path === '/cms/pages' ? location.pathname.startsWith('/cms') : location.pathname.startsWith(link.path))) 
                 ? 'active' : ''
             }`}
+            onClick={() => setIsMobileOpen(false)}
           >
             {link.icon}
             {link.name}
           </Link>
         ))}
       </div>
-    </div>
+      </div>
+    </>
   );
 };
 
@@ -156,6 +165,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
   const { profile } = useSelector((state: RootState) => state.settings);
   const location = useLocation();
   const [init, setInit] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   useEffect(() => {
     // Only fetch profile initially, do not depend on location.pathname
@@ -208,14 +218,17 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
 
   return (
     <div className={`app-container ${theme}`} style={{ background: 'var(--sidebar-bg)', color: 'var(--text-main)' }}>
-      <Sidebar />
+      <Sidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
       <TopBarUserWidget adminName={profile?.name || profile?.username} adminImage={profile?.image} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
       <main className="main-content" style={{ paddingTop: '1.5rem', display: 'flex', flexDirection: 'column' }}>
         {!location.pathname.match(/^\/drivers\/[a-zA-Z0-9_-]+/) && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
-              {getPageTitle(location.pathname)}
-            </h1>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <button className="mobile-menu-btn" onClick={() => setIsMobileOpen(true)}><Menu size={24} /></button>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0 }}>
+                {getPageTitle(location.pathname)}
+              </h1>
+            </div>
           </div>
         )}
         {needsSetup && location.pathname === '/settings' && (
