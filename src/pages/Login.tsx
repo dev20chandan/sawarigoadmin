@@ -21,7 +21,7 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
 
     try {
       const response = await axiosInstance.post('/admin/login', { username, password });
-      
+
       const { access_token } = response.data;
       if (access_token) {
         dispatch(setCredentials({ token: access_token }));
@@ -52,13 +52,12 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ width: '100%' }} autoComplete="off">
+        <form onSubmit={handleLogin} style={{ width: '100%' }} >
           <div className="form-group">
             <label>Username</label>
             <input
               type="text"
               name="username_field"
-              autoComplete="new-password"
               className="form-control"
               placeholder="Enter admin username"
               value={username}
@@ -73,7 +72,6 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
               <input
                 type={showPassword ? 'text' : 'password'}
                 name="password_field"
-                autoComplete="new-password"
                 className="form-control"
                 style={{ width: '100%', paddingRight: '40px' }}
                 placeholder="••••••••"

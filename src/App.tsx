@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation, Navigate, useNavigate 
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from './store';
 import { fetchProfile } from './store/settingsSlice';
-import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, Car, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, Car, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon, Menu, X, MessageSquare } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import UserList from './pages/UserList';
 import DriverVerification from './pages/DriverVerification';
@@ -23,7 +23,9 @@ import RideFareDetails from './pages/RideFareDetails';
 import CancellationRecords from './pages/CancellationRecords';
 import SupportRecords from './pages/SupportRecords';
 import WalletLedger from './pages/WalletLedger';
+
 import { User, FileText, Tag, Truck, Star, Ban, LifeBuoy, IndianRupee } from 'lucide-react';
+import Contacts from './pages/Contacts';
 
 export const SmartAvatar = ({ src, name, size = 36, type = 'icon' }: { src?: string, name: string, size?: number, type?: 'initial' | 'icon' }) => {
   const [error, setError] = useState(false);
@@ -31,11 +33,11 @@ export const SmartAvatar = ({ src, name, size = 36, type = 'icon' }: { src?: str
 
   if (!src || error) {
     if (type === 'icon') {
-        return (
-          <div style={{ width: size, height: size, borderRadius: '50%', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--glass-shadow)', overflow: 'hidden' }}>
-            <User size={size * 0.6} />
-          </div>
-        );
+      return (
+        <div style={{ width: size, height: size, borderRadius: '50%', border: '1px solid var(--border)', background: 'var(--bg-card)', color: 'var(--text-muted)', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: 'var(--glass-shadow)', overflow: 'hidden' }}>
+          <User size={size * 0.6} />
+        </div>
+      );
     }
     return (
       <div style={{ width: size, height: size, borderRadius: '50%', background: 'var(--gradient-main)', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0, boxShadow: '0 2px 5px rgba(255,107,53,0.3)', fontWeight: 'bold', fontSize: `${size * 0.45}px` }}>
@@ -45,13 +47,13 @@ export const SmartAvatar = ({ src, name, size = 36, type = 'icon' }: { src?: str
   }
 
   const resolvedUrl = (src.startsWith('http') || src.startsWith('data:')) ? src : `${API_BASE_URL}${src.startsWith('/') ? '' : '/'}${src}`;
-  
+
   return (
-    <img 
-      src={resolvedUrl} 
-      alt={name} 
-      onError={() => setError(true)} 
-      style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)', boxShadow: 'var(--glass-shadow)' }} 
+    <img
+      src={resolvedUrl}
+      alt={name}
+      onError={() => setError(true)}
+      style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '1px solid var(--border)', boxShadow: 'var(--glass-shadow)' }}
     />
   );
 };
@@ -76,7 +78,7 @@ const TopBarUserWidget = ({ adminName, adminImage, onLogout, theme, toggleTheme 
   return (
     <div ref={dropdownRef} className="top-widget-container" style={{ position: 'absolute', top: '1.5rem', right: '2rem', zIndex: 100 }}>
       {/* Trigger */}
-      <div 
+      <div
         onClick={() => setIsOpen(!isOpen)}
         className="btn btn-outline"
         title={adminName || 'Admin'}
@@ -115,7 +117,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: boolean, set
     { name: 'Drivers', path: '/drivers', icon: <FileCheck size={20} /> },
     { name: 'Trip Activity', path: '/rides', icon: <RouteIcon size={20} /> },
     { name: 'Notifications', path: '/notifications', icon: <BellRing size={20} /> },
-    { name: 'Support', path: '/support', icon: <LifeBuoy size={20} /> },
+    { name: 'Support Tickets', path: '/support', icon: <LifeBuoy size={20} /> },
+    { name: 'Contacts / Enquiries', path: '/contacts', icon: <MessageSquare size={20} /> },
     { name: 'Vehicle Types', path: '/vehicle-types', icon: <Truck size={20} /> },
     { name: 'Reviews', path: '/reviews', icon: <Star size={20} /> },
     { name: 'Cancellations', path: '/cancellations', icon: <Ban size={20} /> },
@@ -138,23 +141,22 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: boolean, set
             <X size={24} />
           </button>
         </div>
-      <div className="nav-links">
-        {links.map((link) => (
-          <Link
-            key={link.name}
-            to={link.path}
-            className={`nav-item ${
-              (link.path === '/' ? location.pathname === '/' : 
-              (link.path === '/cms/pages' ? location.pathname.startsWith('/cms') : location.pathname.startsWith(link.path))) 
-                ? 'active' : ''
-            }`}
-            onClick={() => setIsMobileOpen(false)}
-          >
-            {link.icon}
-            {link.name}
-          </Link>
-        ))}
-      </div>
+        <div className="nav-links">
+          {links.map((link) => (
+            <Link
+              key={link.name}
+              to={link.path}
+              className={`nav-item ${(link.path === '/' ? location.pathname === '/' :
+                  (link.path === '/cms/pages' ? location.pathname.startsWith('/cms') : location.pathname.startsWith(link.path)))
+                  ? 'active' : ''
+                }`}
+              onClick={() => setIsMobileOpen(false)}
+            >
+              {link.icon}
+              {link.name}
+            </Link>
+          ))}
+        </div>
       </div>
     </>
   );
@@ -178,24 +180,24 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
       .catch((err) => {
         setInit(true);
         if (err === 'Unauthorized' || (err && err.statusCode === 401) || String(err).includes('401')) {
-           handleLogout();
+          handleLogout();
         }
       });
   }, [dispatch, handleLogout]);
 
   // Handle initial loading so we don't flash default routes or triggers false needsSetup
   if (!init) {
-     return <div style={{ display: 'flex', width: '100vw', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>
-       <Loader2 className="animate-spin" size={40} color="var(--accent-primary)" />
-       <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`}</style>
-     </div>;
+    return <div style={{ display: 'flex', width: '100vw', height: '100vh', justifyContent: 'center', alignItems: 'center' }}>
+      <Loader2 className="animate-spin" size={40} color="var(--accent-primary)" />
+      <style>{`@keyframes spin { 100% { transform: rotate(360deg); } } .animate-spin { animation: spin 1s linear infinite; }`}</style>
+    </div>;
   }
 
   const needsSetup = !profile?.name || !profile?.email;
 
   const getPageTitle = (path: string) => {
     if (path.startsWith('/drivers/')) return 'Captain Details';
-    
+
     switch (path) {
       case '/': return 'Platform Overview';
       case '/users': return 'Users Management';
@@ -203,6 +205,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
       case '/rides': return 'Trip Activity';
       case '/notifications': return 'Notifications';
       case '/support': return 'Support Tickets';
+      case '/contacts': return 'Website Contacts & Enquiries';
       case '/vehicle-types': return 'Vehicle Types Management';
       case '/reviews': return 'Ratings & Reviews';
       case '/cancellations': return 'Cancellation Records';
@@ -245,6 +248,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
           <Route path="/rides" element={needsSetup ? <Navigate to="/settings" /> : <RideList />} />
           <Route path="/notifications" element={needsSetup ? <Navigate to="/settings" /> : <Notifications />} />
           <Route path="/support" element={needsSetup ? <Navigate to="/settings" /> : <SupportRecords />} />
+          <Route path="/contacts" element={needsSetup ? <Navigate to="/settings" /> : <Contacts />} />
           <Route path="/vehicle-types" element={needsSetup ? <Navigate to="/settings" /> : <VehicleTypes />} />
           <Route path="/reviews" element={needsSetup ? <Navigate to="/settings" /> : <RatingsAndReviews />} />
           <Route path="/cancellations" element={needsSetup ? <Navigate to="/settings" /> : <CancellationRecords />} />
@@ -280,9 +284,9 @@ const App = () => {
   }, [theme]);
 
   const toggleTheme = () => setTheme(prev => prev === 'light' ? 'dark' : 'light');
-  
+
   const handleLogin = () => setIsAuthenticated(true);
-  
+
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
     setIsAuthenticated(false);

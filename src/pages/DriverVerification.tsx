@@ -358,8 +358,8 @@ const DriverVerification = () => {
 
             <h3 style={{ fontSize: '1rem', marginTop: '0.5rem', color: 'var(--accent-primary)' }}>Vehicle Details</h3>
             <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
-              <div 
-                className="input" 
+              <div
+                className="input"
                 onClick={() => setIsVehicleDropdownOpen(!isVehicleDropdownOpen)}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
               >
@@ -378,7 +378,7 @@ const DriverVerification = () => {
               {isVehicleDropdownOpen && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', marginTop: '4px', zIndex: 10, maxHeight: '200px', overflowY: 'auto', boxShadow: 'var(--glass-shadow)' }}>
                   {vehicleTypes.length > 0 ? vehicleTypes.map((type: any) => (
-                    <div 
+                    <div
                       key={type.name}
                       onClick={() => {
                         setFormData({ ...formData, vehicleType: type.name });
