@@ -309,12 +309,7 @@ export default function Contacts() {
                   )}
                 </div>
 
-                <div style={{ marginBottom: '1.5rem' }}>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Subject</div>
-                  <div style={{ fontWeight: 600, fontSize: '1.1rem', color: 'var(--text-main)', lineHeight: 1.4 }}>
-                    {activeContact.subject || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No Subject Provided</span>}
-                  </div>
-                </div>
+
 
                 <div style={{ marginBottom: '2rem' }}>
                   <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '0.5rem' }}>Message Content</div>
