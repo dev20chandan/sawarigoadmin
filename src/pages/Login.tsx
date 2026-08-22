@@ -52,11 +52,13 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
           </div>
         )}
 
-        <form onSubmit={handleLogin} style={{ width: '100%' }}>
+        <form onSubmit={handleLogin} style={{ width: '100%' }} autoComplete="off">
           <div className="form-group">
             <label>Username</label>
             <input
               type="text"
+              name="username_field"
+              autoComplete="new-password"
               className="form-control"
               placeholder="Enter admin username"
               value={username}
@@ -70,6 +72,8 @@ const Login = ({ onLogin }: { onLogin: () => void }) => {
             <div style={{ position: 'relative', width: '100%' }}>
               <input
                 type={showPassword ? 'text' : 'password'}
+                name="password_field"
+                autoComplete="new-password"
                 className="form-control"
                 style={{ width: '100%', paddingRight: '40px' }}
                 placeholder="••••••••"
