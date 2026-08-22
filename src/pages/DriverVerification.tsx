@@ -25,6 +25,7 @@ const DriverVerification = () => {
   const [filterStatus, setFilterStatus] = useState(state?.filterStatus || 'ALL');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
+  const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     name: '',
@@ -85,6 +86,10 @@ const DriverVerification = () => {
 
   useEffect(() => {
     loadDrivers();
+    // Fetch dynamic vehicle types for the form dropdown
+    axiosInstance.get('/vehicles/types')
+      .then(res => setVehicleTypes(res.data?.body || []))
+      .catch(err => console.error('Failed to fetch vehicle types', err));
   }, [dispatch]);
 
   const filteredDrivers = drivers.filter(d => {
@@ -333,13 +338,18 @@ const DriverVerification = () => {
 
             <h3 style={{ fontSize: '1rem', marginTop: '0.5rem', color: 'var(--accent-primary)' }}>Vehicle Details</h3>
             <select className="input" value={formData.vehicleType} onChange={e => setFormData({ ...formData, vehicleType: e.target.value })} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-              <option value="CAR" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Car</option>
-              <option value="BIKE" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Bike</option>
-              <option value="AUTO" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Auto</option>
-              <option value="TAXI" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Taxi</option>
-              <option value="PICKUP" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Pickup</option>
-              <option value="PREMIUM" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Premium</option>
-              <option value="BIKE_PARCEL" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Bike Parcel</option>
+              {vehicleTypes.length > 0 ? (
+                vehicleTypes.map((type: any) => (
+                  <option key={type.name} value={type.name} style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>
+                    {type.label || type.name}
+                  </option>
+                ))
+              ) : (
+                <>
+                  <option value="CAR" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Car</option>
+                  <option value="BIKE" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Bike</option>
+                </>
+              )}
             </select>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>

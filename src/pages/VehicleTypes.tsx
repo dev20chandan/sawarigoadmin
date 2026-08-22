@@ -16,7 +16,8 @@ const VehicleTypes = () => {
     description: '',
     baseFare: '',
     perKmRate: '',
-    seats: '4'
+    seats: '4',
+    image: ''
   });
 
   const fetchData = async () => {
@@ -44,7 +45,8 @@ const VehicleTypes = () => {
         description: formData.description,
         seats: Number(formData.seats),
         baseFare: Number(formData.baseFare),
-        perKmRate: Number(formData.perKmRate)
+        perKmRate: Number(formData.perKmRate),
+        image: formData.image
       };
 
       if (editingType) {
@@ -89,7 +91,7 @@ const VehicleTypes = () => {
           style={{ padding: '0.5rem 1rem' }}
           onClick={() => {
             setEditingType(null);
-            setFormData({ name: '', label: '', description: '', baseFare: '', perKmRate: '', seats: '4' });
+            setFormData({ name: '', label: '', description: '', baseFare: '', perKmRate: '', seats: '4', image: '' });
             setIsModalOpen(true);
           }}
         >
@@ -112,7 +114,14 @@ const VehicleTypes = () => {
           <tbody>
             {vehicleTypes.map((vType: any) => (
               <tr key={vType.id || vType.name}>
-                <td style={{ textAlign: 'left', paddingLeft: '1rem', fontWeight: 500, color: 'var(--text-muted)' }}>
+                <td style={{ textAlign: 'left', paddingLeft: '1rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  {vType.image && (
+                    <img 
+                      src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`} 
+                      alt="icon" 
+                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
+                    />
+                  )}
                   {vType.name}
                 </td>
                 <td style={{ textAlign: 'left', fontWeight: 500 }}>
@@ -132,7 +141,8 @@ const VehicleTypes = () => {
                           description: vType.description || '',
                           baseFare: vType.baseFare || '',
                           perKmRate: vType.perKmRate || '',
-                          seats: vType.seats || '4'
+                          seats: vType.seats || '4',
+                          image: vType.image || ''
                         });
                         setIsModalOpen(true);
                       }}
@@ -173,6 +183,34 @@ const VehicleTypes = () => {
               <button onClick={() => setIsModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
                 <X size={24} />
               </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--input-bg)', border: '1px dashed var(--border)', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}>
+                {formData.image ? (
+                  <img src={formData.image.startsWith('http') ? formData.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${formData.image.startsWith('/') ? '' : '/'}${formData.image}`} alt="Type" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                ) : (
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>Upload Icon</div>
+                )}
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  onChange={async (e: any) => {
+                    const file = e.target.files[0];
+                    if (!file) return;
+                    const fd = new FormData();
+                    fd.append('file', file);
+                    try {
+                      const res = await axiosInstance.post('/uploads/image', fd, { headers: { 'Content-Type': 'multipart/form-data' } });
+                      setFormData(prev => ({ ...prev, image: res.data.url }));
+                    } catch (err) {
+                      console.error('Upload failed', err);
+                    }
+                  }} 
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
+                />
+              </div>
+              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Category Icon</span>
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
