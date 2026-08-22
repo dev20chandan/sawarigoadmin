@@ -12,6 +12,7 @@ export default function Contacts() {
   const [activeContact, setActiveContact] = useState<any | null>(null);
   const [contactDetailsLoading, setContactDetailsLoading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [contactToDelete, setContactToDelete] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -46,20 +47,20 @@ export default function Contacts() {
     }
   };
 
-  const handleDelete = async (e: React.MouseEvent, id: string) => {
-    e.stopPropagation();
-    if (!window.confirm('Are you sure you want to delete this contact message?')) return;
-    
+  const confirmDelete = async () => {
+    if (!contactToDelete) return;
+
     try {
-      setDeletingId(id);
-      await axiosInstance.delete(`/admin/contacts/${id}`);
-      setContacts(prev => prev.filter(c => c.id !== id));
-      if (activeContact?.id === id) setActiveContact(null);
+      setDeletingId(contactToDelete);
+      await axiosInstance.delete(`/admin/contacts/${contactToDelete}`);
+      setContacts(prev => prev.filter(c => c.id !== contactToDelete));
+      if (activeContact?.id === contactToDelete) setActiveContact(null);
     } catch (err) {
       console.error('Failed to delete contact:', err);
       alert('Failed to delete contact. Please try again.');
     } finally {
       setDeletingId(null);
+      setContactToDelete(null);
     }
   };
 
@@ -199,7 +200,7 @@ export default function Contacts() {
                         </button>
                         <button 
                           disabled={deletingId === contact.id}
-                          onClick={(e) => handleDelete(e, contact.id)} 
+                          onClick={(e) => { e.stopPropagation(); setContactToDelete(contact.id); }}
                           className="btn btn-outline" 
                           style={{ padding: '0.4rem 0.6rem', color: 'var(--danger)', borderColor: 'var(--danger)' }} 
                           title="Delete Message"
@@ -331,12 +332,43 @@ export default function Contacts() {
               </button>
               <button 
                 onClick={(e) => { 
-                  handleDelete(e, activeContact.id);
+                  setContactToDelete(activeContact.id);
                 }} 
                 className="btn btn-outline" 
                 style={{ flex: 1, color: 'var(--danger)', borderColor: 'rgba(239, 68, 68, 0.4)' }}
               >
                 Delete
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {contactToDelete && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '380px', padding: '2rem', textAlign: 'center' }}>
+            <Trash2 size={48} color="var(--danger)" style={{ marginBottom: '1rem' }} />
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Are you sure?</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.5 }}>
+              Are you sure you want to delete this contact message? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button 
+                onClick={() => setContactToDelete(null)} 
+                className="btn btn-outline" 
+                style={{ flex: 1, padding: '0.75rem' }}
+                disabled={!!deletingId}
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={confirmDelete} 
+                className="btn btn-primary" 
+                style={{ flex: 1, padding: '0.75rem', background: 'var(--danger)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)' }}
+                disabled={!!deletingId}
+              >
+                {deletingId ? <Loader2 size={20} className="animate-spin" /> : 'Delete'}
               </button>
             </div>
           </div>
