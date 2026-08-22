@@ -22,6 +22,7 @@ const DriverVerification = () => {
   const [statusToUpdate, setStatusToUpdate] = useState<{ id: string, status: string } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
+  const [isVehicleDropdownOpen, setIsVehicleDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState(state?.filterStatus || 'ALL');
   const [currentPage, setCurrentPage] = useState(1);
@@ -165,7 +166,7 @@ const DriverVerification = () => {
               <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
               <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Driver Name</th>
               <th style={{ textAlign: 'center' }}>Email</th>
-              <th style={{ textAlign: 'center' }}>Vehicle No.</th>
+              <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Vehicle</th>
               <th style={{ textAlign: 'center' }}>Status</th>
               <th style={{ textAlign: 'center' }}>Action</th>
             </tr>
@@ -187,7 +188,25 @@ const DriverVerification = () => {
                     </div>
                   </td>
                   <td style={{ textAlign: 'center' }}>{driver.profile?.email || '-'}</td>
-                  <td style={{ textAlign: 'center' }}>{driver.vehicle}</td>
+                  <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      {(() => {
+                        const vType = vehicleTypes.find(v => v.name === driver.vehicleDetails?.type);
+                        if (vType && vType.image) {
+                          return <img src={vType.image.startsWith('http') ? vType.image : `${API_BASE_URL}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`} alt="vehicle" style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} />;
+                        }
+                        return <div style={{ width: '32px', height: '32px', borderRadius: '50%', background: 'var(--input-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>N/A</div>;
+                      })()}
+                      <div style={{ display: 'flex', flexDirection: 'column' }}>
+                        <span style={{ fontWeight: 500, color: 'var(--text-main)', fontSize: '0.9rem' }}>
+                          {vehicleTypes.find(v => v.name === driver.vehicleDetails?.type)?.label || driver.vehicleDetails?.type || 'Unknown'}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                          {driver.vehicleDetails?.plateNumber || driver.vehicle || 'No Plate'}
+                        </span>
+                      </div>
+                    </div>
+                  </td>
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${driver.status?.toLowerCase()}`} style={{ textTransform: 'capitalize' }}>
                       {driver.status?.toLowerCase()}
@@ -338,20 +357,46 @@ const DriverVerification = () => {
             </div>
 
             <h3 style={{ fontSize: '1rem', marginTop: '0.5rem', color: 'var(--accent-primary)' }}>Vehicle Details</h3>
-            <select className="input" value={formData.vehicleType} onChange={e => setFormData({ ...formData, vehicleType: e.target.value })} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', marginBottom: '0.5rem' }}>
-              {vehicleTypes.length > 0 ? (
-                vehicleTypes.map((type: any) => (
-                  <option key={type.name} value={type.name} style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>
-                    {type.label || type.name}
-                  </option>
-                ))
-              ) : (
-                <>
-                  <option value="CAR" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Car</option>
-                  <option value="BIKE" style={{ background: 'var(--bg-card)', color: 'var(--text-main)' }}>Bike</option>
-                </>
+            <div style={{ position: 'relative', marginBottom: '0.5rem' }}>
+              <div 
+                className="input" 
+                onClick={() => setIsVehicleDropdownOpen(!isVehicleDropdownOpen)}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer' }}
+              >
+                {formData.vehicleType ? (
+                  (() => {
+                    const selected = vehicleTypes.find(v => v.name === formData.vehicleType);
+                    return selected ? (
+                      <>
+                        {selected.image && <img src={selected.image.startsWith('http') ? selected.image : `${API_BASE_URL}${selected.image.startsWith('/') ? '' : '/'}${selected.image}`} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />}
+                        <span>{selected.label || selected.name}</span>
+                      </>
+                    ) : <span>{formData.vehicleType}</span>
+                  })()
+                ) : <span>Select Vehicle Type...</span>}
+              </div>
+              {isVehicleDropdownOpen && (
+                <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', marginTop: '4px', zIndex: 10, maxHeight: '200px', overflowY: 'auto', boxShadow: 'var(--glass-shadow)' }}>
+                  {vehicleTypes.length > 0 ? vehicleTypes.map((type: any) => (
+                    <div 
+                      key={type.name}
+                      onClick={() => {
+                        setFormData({ ...formData, vehicleType: type.name });
+                        setIsVehicleDropdownOpen(false);
+                      }}
+                      style={{ padding: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', borderBottom: '1px solid var(--border)' }}
+                      onMouseEnter={(e) => e.currentTarget.style.background = 'var(--input-bg)'}
+                      onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}
+                    >
+                      {type.image && <img src={type.image.startsWith('http') ? type.image : `${API_BASE_URL}${type.image.startsWith('/') ? '' : '/'}${type.image}`} style={{ width: '28px', height: '28px', borderRadius: '50%', objectFit: 'cover' }} />}
+                      <span>{type.label || type.name}</span>
+                    </div>
+                  )) : (
+                    <div style={{ padding: '0.8rem', color: 'var(--text-muted)' }}>No vehicle types available</div>
+                  )}
+                </div>
               )}
-            </select>
+            </div>
 
             <div style={{ display: 'flex', flexDirection: 'column' }}>
               <input className="input" placeholder="Plate Number" value={formData.vehiclePlate} onChange={e => { setFormData({ ...formData, vehiclePlate: e.target.value.toUpperCase() }); setFieldErrors({ ...fieldErrors, vehiclePlate: '' }); }} style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: `1px solid ${fieldErrors.vehiclePlate ? 'var(--danger)' : 'var(--border)'}`, background: 'var(--input-bg)', color: 'var(--text-main)' }} />

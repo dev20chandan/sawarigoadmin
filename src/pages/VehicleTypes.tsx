@@ -103,8 +103,8 @@ const VehicleTypes = () => {
         <table>
           <thead>
             <tr>
-              <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Type Code (Name)</th>
-              <th style={{ textAlign: 'left' }}>Label</th>
+              <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
+              <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Vehicle Name</th>
               <th style={{ textAlign: 'center' }}>Seats</th>
               <th style={{ textAlign: 'center' }}>Base Fare</th>
               <th style={{ textAlign: 'center' }}>Per Km Rate</th>
@@ -114,18 +114,23 @@ const VehicleTypes = () => {
           <tbody>
             {vehicleTypes.map((vType: any) => (
               <tr key={vType.id || vType.name}>
-                <td style={{ textAlign: 'left', paddingLeft: '1rem', fontWeight: 500, color: 'var(--text-muted)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  {vType.image && (
-                    <img 
-                      src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`} 
-                      alt="icon" 
-                      style={{ width: '32px', height: '32px', borderRadius: '50%', objectFit: 'cover' }} 
-                    />
+                <td style={{ textAlign: 'center' }}>
+                  {vType.image ? (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <img 
+                        src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`} 
+                        alt="icon" 
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} 
+                      />
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', justifyContent: 'center' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: 'var(--input-bg)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.6rem', color: 'var(--text-muted)' }}>N/A</div>
+                    </div>
                   )}
-                  {vType.name}
                 </td>
-                <td style={{ textAlign: 'left', fontWeight: 500 }}>
-                  {vType.label}
+                <td style={{ textAlign: 'left', paddingLeft: '1rem', fontWeight: 500, color: 'var(--text-main)' }}>
+                  {vType.name}
                 </td>
                 <td style={{ textAlign: 'center' }}>{vType.seats}</td>
                 <td style={{ textAlign: 'center' }}>₹{vType.baseFare}</td>
@@ -188,7 +193,12 @@ const VehicleTypes = () => {
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '1.5rem' }}>
               <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--input-bg)', border: '1px dashed var(--border)', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}>
                 {formData.image ? (
-                  <img src={formData.image.startsWith('http') ? formData.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${formData.image.startsWith('/') ? '' : '/'}${formData.image}`} alt="Type" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <>
+                    <img src={formData.image.startsWith('http') ? formData.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${formData.image.startsWith('/') ? '' : '/'}${formData.image}`} alt="Type" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', padding: '4px', display: 'flex', justifyContent: 'center' }}>
+                      <Edit size={14} color="#fff" />
+                    </div>
+                  </>
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>Upload Icon</div>
                 )}
@@ -213,34 +223,20 @@ const VehicleTypes = () => {
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Category Icon</span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Type Code (e.g. SEDAN)</label>
-                <input
-                  className="input"
-                  placeholder="e.g. SEDAN"
-                  value={formData.name}
-                  onChange={e => setFormData({ ...formData, name: e.target.value.toUpperCase() })}
-                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Display Label (e.g. Sedan)</label>
-                <input
-                  className="input"
-                  placeholder="e.g. Sedan"
-                  value={formData.label}
-                  onChange={e => setFormData({ ...formData, label: e.target.value })}
-                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
-                />
-              </div>
+            <div style={{ marginBottom: '1rem' }}>
+              <input
+                className="input"
+                placeholder="Vehicle Name (e.g. SEDAN)"
+                value={formData.name}
+                onChange={e => setFormData({ ...formData, name: e.target.value.toUpperCase(), label: e.target.value })}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
+              />
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Description</label>
               <input
                 className="input"
-                placeholder="e.g. 4 Seater AC ride..."
+                placeholder="Description (e.g. 4 Seater AC ride...)"
                 value={formData.description}
                 onChange={e => setFormData({ ...formData, description: e.target.value })}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
@@ -249,33 +245,30 @@ const VehicleTypes = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Base Fare (₹)</label>
                 <input
                   type="number"
                   className="input"
-                  placeholder="50"
+                  placeholder="Base Fare (₹)"
                   value={formData.baseFare}
                   onChange={e => setFormData({ ...formData, baseFare: e.target.value })}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Per Km (₹)</label>
                 <input
                   type="number"
                   className="input"
-                  placeholder="12"
+                  placeholder="Per Km Rate (₹)"
                   value={formData.perKmRate}
                   onChange={e => setFormData({ ...formData, perKmRate: e.target.value })}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
                 />
               </div>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.9rem' }}>Seats</label>
                 <input
                   type="number"
                   className="input"
-                  placeholder="4"
+                  placeholder="Seats"
                   value={formData.seats}
                   onChange={e => setFormData({ ...formData, seats: e.target.value })}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
