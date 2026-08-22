@@ -7,6 +7,7 @@ import { SmartAvatar } from '../App';
 import type { RootState, AppDispatch } from '../store';
 import { fetchDrivers, deleteDriver, updateDriver, addDriver, updateDriverStatus } from '../store/driverSlice';
 import axiosInstance from '../utils/axiosInstance';
+import { API_BASE_URL } from '../config';
 
 const DriverVerification = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -298,7 +299,7 @@ const DriverVerification = () => {
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
                 <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--input-bg)', border: '1px dashed var(--border)', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}>
                   {formData.profileImage ? (
-                    <img src={formData.profileImage} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={formData.profileImage.startsWith('http') || formData.profileImage.startsWith('data:') ? formData.profileImage : `${API_BASE_URL}${formData.profileImage.startsWith('/') ? '' : '/'}${formData.profileImage}`} alt="Profile" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : (
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>Upload Photo</div>
                   )}
