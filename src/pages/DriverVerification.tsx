@@ -37,7 +37,7 @@ const DriverVerification = () => {
     vehicleBrand: '',
     vehicleModel: '',
     vehicleYear: '',
-    vehicleType: 'CAR',
+    vehicleType: '',
     vehiclePlate: '',
     documents: {
       DRIVING_LICENSE: '',
@@ -152,7 +152,7 @@ const DriverVerification = () => {
             <option value="REJECTED">Rejected</option>
             <option value="SUSPENDED">Suspended</option>
           </select>
-          <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => { setEditingDriver(null); setFormData({ name: '', phoneNumber: '', email: '', gender: 'Male', vehicleBrand: '', vehicleModel: '', vehicleYear: '', vehicleType: 'CAR', vehiclePlate: '', documents: { DRIVING_LICENSE: '', AADHAR: '' } as Record<string, string>, latitude: '', longitude: '', profileImage: '' }); setIsModalOpen(true); }}>
+          <button className="btn btn-primary" style={{ padding: '0.5rem 1rem' }} onClick={() => { setEditingDriver(null); setFormData({ name: '', phoneNumber: '', email: '', gender: 'Male', vehicleBrand: '', vehicleModel: '', vehicleYear: '', vehicleType: '', vehiclePlate: '', documents: { DRIVING_LICENSE: '', AADHAR: '' } as Record<string, string>, latitude: '', longitude: '', profileImage: '' }); setIsModalOpen(true); }}>
             + Add Driver
           </button>
         </div>

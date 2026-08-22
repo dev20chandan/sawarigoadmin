@@ -5,6 +5,7 @@ import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import type { RootState, AppDispatch } from '../store';
 import { fetchCoupons, addCoupon, updateCoupon, deleteCoupon } from '../store/couponSlice';
+import axiosInstance from '../utils/axiosInstance';
 
 const Coupons = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -12,6 +13,7 @@ const Coupons = () => {
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCoupon, setEditingCoupon] = useState<any>(null);
+  const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [couponToDelete, setCouponToDelete] = useState<string | null>(null);
@@ -20,10 +22,10 @@ const Coupons = () => {
   
   const [formData, setFormData] = useState({
     code: '',
-    type: 'FIXED',
-    discountValue: 0,
+    type: 'PERCENTAGE',
+    discountValue: 10,
     maxDiscount: 0,
-    minRideFare: 0,
+    minRideFare: 40,
     validFrom: '',
     validTo: '',
     vehicleType: 'ALL',
@@ -33,7 +35,12 @@ const Coupons = () => {
     status: 'ACTIVE'
   });
 
-  useEffect(() => { dispatch(fetchCoupons()); }, [dispatch]);
+  useEffect(() => { 
+    dispatch(fetchCoupons()); 
+    axiosInstance.get('/vehicles/types')
+      .then(res => setVehicleTypes(res.data?.body || []))
+      .catch(err => console.error('Failed to fetch vehicle types', err));
+  }, [dispatch]);
 
   const handleSubmit = async () => {
     if(!formData.code.trim()) return;
@@ -83,10 +90,10 @@ const Coupons = () => {
       setEditingCoupon(null);
       setFormData({
         code: '',
-        type: 'FIXED',
-        discountValue: 0,
+        type: 'PERCENTAGE',
+        discountValue: 10,
         maxDiscount: 0,
-        minRideFare: 0,
+        minRideFare: 40,
         validFrom: new Date().toISOString().slice(0, 16),
         validTo: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
         vehicleType: 'ALL',
@@ -270,17 +277,17 @@ const Coupons = () => {
                     <label>Applicable Vehicle</label>
                     <select className="form-control" value={formData.vehicleType} onChange={e => setFormData({...formData, vehicleType: e.target.value})}>
                         <option value="ALL">All</option>
-                        <option value="BIKE">Bike</option>
-                        <option value="AUTO">Auto</option>
-                        <option value="CAB">Cab</option>
+                        {vehicleTypes.map((type: any) => (
+                            <option key={type.name} value={type.name}>{type.label || type.name}</option>
+                        ))}
                     </select>
                 </div>
                 <div className="form-group">
-                    <label>User Type</label>
+                    <label>Target Audience</label>
                     <select className="form-control" value={formData.userType} onChange={e => setFormData({...formData, userType: e.target.value})}>
-                        <option value="ALL">All Users</option>
-                        <option value="NEW">New Users</option>
-                        <option value="EXISTING">Existing Users</option>
+                        <option value="ALL">All</option>
+                        <option value="USER">Rider (User)</option>
+                        <option value="DRIVER">Driver</option>
                     </select>
                 </div>
             </div>
