@@ -17,7 +17,8 @@ const VehicleTypes = () => {
     baseFare: '',
     perKmRate: '',
     seats: '4',
-    image: ''
+    image: '',
+    displayOrder: '0'
   });
 
   const fetchData = async () => {
@@ -38,6 +39,11 @@ const VehicleTypes = () => {
   }, []);
 
   const handleSubmit = async () => {
+    if (!formData.image) {
+      alert('Vehicle image is required. Please upload an image first.');
+      return;
+    }
+    
     try {
       const payload = {
         name: formData.name,
@@ -46,7 +52,8 @@ const VehicleTypes = () => {
         seats: Number(formData.seats),
         baseFare: Number(formData.baseFare),
         perKmRate: Number(formData.perKmRate),
-        image: formData.image
+        image: formData.image,
+        displayOrder: Number(formData.displayOrder || 0)
       };
 
       if (editingType) {
@@ -91,7 +98,7 @@ const VehicleTypes = () => {
           style={{ padding: '0.5rem 1rem' }}
           onClick={() => {
             setEditingType(null);
-            setFormData({ name: '', label: '', description: '', baseFare: '', perKmRate: '', seats: '4', image: '' });
+            setFormData({ name: '', label: '', description: '', baseFare: '', perKmRate: '', seats: '4', image: '', displayOrder: '0' });
             setIsModalOpen(true);
           }}
         >
@@ -104,6 +111,7 @@ const VehicleTypes = () => {
           <thead>
             <tr>
               <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
+              <th style={{ textAlign: 'center', width: '60px' }}>Order</th>
               <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Vehicle Name</th>
               <th style={{ textAlign: 'center' }}>Seats</th>
               <th style={{ textAlign: 'center' }}>Base Fare</th>
@@ -129,6 +137,7 @@ const VehicleTypes = () => {
                     </div>
                   )}
                 </td>
+                <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--accent-primary)' }}>{vType.displayOrder || 0}</td>
                 <td style={{ textAlign: 'left', paddingLeft: '1rem', fontWeight: 500, color: 'var(--text-main)' }}>
                   {vType.name}
                 </td>
@@ -147,7 +156,8 @@ const VehicleTypes = () => {
                           baseFare: vType.baseFare || '',
                           perKmRate: vType.perKmRate || '',
                           seats: vType.seats || '4',
-                          image: vType.image || ''
+                          image: vType.image || '',
+                          displayOrder: vType.displayOrder !== undefined ? String(vType.displayOrder) : '0'
                         });
                         setIsModalOpen(true);
                       }}
@@ -224,16 +234,29 @@ const VehicleTypes = () => {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Vehicle Name</label>
               <input
                 className="input"
                 placeholder="Vehicle Name (e.g. SEDAN)"
                 value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value, label: e.target.value })}
+                onChange={e => setFormData({ ...formData, name: e.target.value })}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
               />
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Display Label</label>
+              <input
+                className="input"
+                placeholder="Display Label (e.g. Sedan (4 Seats))"
+                value={formData.label}
+                onChange={e => setFormData({ ...formData, label: e.target.value })}
+                style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
+              />
+            </div>
+
+            <div style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Description</label>
               <input
                 className="input"
                 placeholder="Description (e.g. 4 Seater AC ride...)"
@@ -243,8 +266,9 @@ const VehicleTypes = () => {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
               <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Base Fare</label>
                 <input
                   type="number"
                   className="input"
@@ -255,6 +279,7 @@ const VehicleTypes = () => {
                 />
               </div>
               <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Per Km Rate</label>
                 <input
                   type="number"
                   className="input"
@@ -265,12 +290,24 @@ const VehicleTypes = () => {
                 />
               </div>
               <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Seats</label>
                 <input
                   type="number"
                   className="input"
                   placeholder="Seats"
                   value={formData.seats}
                   onChange={e => setFormData({ ...formData, seats: e.target.value })}
+                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Order Index</label>
+                <input
+                  type="number"
+                  className="input"
+                  placeholder="Order"
+                  value={formData.displayOrder}
+                  onChange={e => setFormData({ ...formData, displayOrder: e.target.value })}
                   style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
                 />
               </div>
