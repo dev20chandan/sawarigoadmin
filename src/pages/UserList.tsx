@@ -5,13 +5,14 @@ import { Search, Loader2, Edit, Trash2, X, CheckCircle } from 'lucide-react';
 import { SmartAvatar } from '../App';
 import type { RootState, AppDispatch } from '../store';
 import { fetchUsers, deleteUser, updateUser } from '../store/userSlice';
+import { useNavigate } from 'react-router-dom';
 
 const UserList = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { users, loading, error } = useSelector((state: RootState) => state.users);
   const [search, setSearch] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [viewingUser, setViewingUser] = useState<any>(null);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
   const [formData, setFormData] = useState({ name: '', email: '', status: '', phoneNumber: '', gender: '' });
@@ -97,7 +98,7 @@ const UserList = () => {
           <tbody>
             {filteredUsers.map((user, index) => {
               return (
-                <tr key={user.id} onClick={() => setViewingUser({ ...user, resolvedCode: user.userCode || `U-${String(index + 1).padStart(2, '0')}` })} style={{ cursor: 'pointer' }} className="hover-highlight">
+                <tr key={user.id} onClick={() => navigate('/users/' + user.id, { state: { user: { ...user, resolvedCode: user.userCode || `U-${String(index + 1).padStart(2, '0')}` } } })} style={{ cursor: 'pointer' }} className="hover-highlight">
                   <td style={{ textAlign: 'center', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{user.userCode || `U-${String(index + 1).padStart(2, '0')}`}</td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
@@ -143,37 +144,7 @@ const UserList = () => {
         </table>
       </div>
       
-      {viewingUser && createPortal(
-        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
-          <div className="glass-panel animate-fade-in" style={{ width: '450px', padding: '2rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-                <SmartAvatar src={viewingUser.profile?.image} name={viewingUser.profile?.name || 'User'} size={56} />
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', margin: 0, color: 'var(--accent-primary)' }}>{viewingUser.profile?.name || 'Unnamed User'}</h2>
-                  <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{viewingUser.resolvedCode}</span>
-                </div>
-              </div>
-              <button onClick={() => setViewingUser(null)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
-                <X size={24} />
-              </button>
-            </div>
-            
-            <div style={{ background: 'var(--input-bg)', borderRadius: '12px', padding: '1.25rem', border: '1px solid var(--border)', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block' }}>Email</strong>{viewingUser.profile?.email || '-'}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block' }}>Mobile</strong>{viewingUser.phoneNumber}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block' }}>Gender</strong>{viewingUser.profile?.gender || '-'}</div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block' }}>Status</strong>
-                <span className={`badge ${(viewingUser.status || 'PENDING').toLowerCase()}`}>{viewingUser.status || 'PENDING'}</span>
-              </div>
-              <div><strong style={{ color: 'var(--text-muted)', fontSize: '0.8rem', display: 'block' }}>Joined On</strong>{new Date(viewingUser.createdAt).toLocaleDateString()}</div>
-            </div>
-            
-            <button onClick={() => setViewingUser(null)} className="btn btn-outline" style={{ width: '100%', marginTop: '1.5rem' }}>Close Details</button>
-          </div>
-        </div>,
-        document.body
-      )}
+
 
       {isModalOpen && editingUser && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>

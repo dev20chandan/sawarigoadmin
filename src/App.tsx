@@ -7,6 +7,7 @@ import { fetchProfile } from './store/settingsSlice';
 import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, Car, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon, Menu, X, MessageSquare } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import UserList from './pages/UserList';
+import UserDetails from './pages/UserDetails';
 import DriverVerification from './pages/DriverVerification';
 import DriverDetails from './pages/DriverDetails';
 import RideList from './pages/RideList';
@@ -198,6 +199,8 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
 
   const getPageTitle = (path: string) => {
     if (path.startsWith('/drivers/')) return 'Captain Details';
+    if (path.startsWith('/users/')) return 'User Details';
+    if (path.startsWith('/rides/')) return 'Ride Details';
 
     switch (path) {
       case '/': return 'Platform Overview';
@@ -225,7 +228,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
       <Sidebar isMobileOpen={isMobileOpen} setIsMobileOpen={setIsMobileOpen} />
       <TopBarUserWidget adminName={profile?.name || profile?.username} adminImage={profile?.image} onLogout={handleLogout} theme={theme} toggleTheme={toggleTheme} />
       <main className="main-content" style={{ paddingTop: '1.5rem', display: 'flex', flexDirection: 'column' }}>
-        {!location.pathname.match(/^\/drivers\/[a-zA-Z0-9_-]+/) && (
+        {!location.pathname.match(/^\/(drivers|rides|users)\/[a-zA-Z0-9_-]+/) && (
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
               <button className="mobile-menu-btn" onClick={() => setIsMobileOpen(true)}><Menu size={24} /></button>
@@ -244,6 +247,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
         <Routes>
           <Route path="/" element={needsSetup ? <Navigate to="/settings" /> : <Dashboard />} />
           <Route path="/users" element={needsSetup ? <Navigate to="/settings" /> : <UserList />} />
+          <Route path="/users/:id" element={needsSetup ? <Navigate to="/settings" /> : <UserDetails />} />
           <Route path="/drivers" element={needsSetup ? <Navigate to="/settings" /> : <DriverVerification />} />
           <Route path="/drivers/:id" element={needsSetup ? <Navigate to="/settings" /> : <DriverDetails />} />
           <Route path="/rides" element={needsSetup ? <Navigate to="/settings" /> : <RideList />} />

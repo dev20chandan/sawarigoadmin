@@ -176,8 +176,8 @@ const RideDetails = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
                 <div><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.profile?.name || 'Unknown'}</span></div>
                 <div><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber || 'Unknown'}</span></div>
-                {ride.driver?.vehicleDetails && (
-                   <div><strong>Vehicle:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.vehicleDetails?.plateNumber || 'N/A'} ({ride.driver?.vehicleDetails?.type || 'N/A'})</span></div>
+                {ride.driver?.vehicles && ride.driver.vehicles.length > 0 && (
+                   <div><strong>Vehicle:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver.vehicles[0].plateNumber || 'N/A'} ({ride.driver.vehicles[0].type || 'N/A'})</span></div>
                 )}
               </div>
             ) : (
@@ -191,12 +191,14 @@ const RideDetails = () => {
            <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
               <Navigation size={18} /> Route Details
            </h3>
-           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-              <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                <div style={{ background: 'rgba(59, 130, 246, 0.1)', padding: '0.5rem', borderRadius: '50%', color: '#3b82f6' }}>
-                  <MapPin size={20} />
+           <div style={{ display: 'flex', flexDirection: 'column', gap: '0', position: 'relative', paddingLeft: '0.5rem' }}>
+              <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', position: 'relative', paddingBottom: (ride.dropLat && ride.dropLng) ? '2rem' : '0' }}>
+                {(ride.dropLat && ride.dropLng) && <div style={{ position: 'absolute', left: '17px', top: '34px', bottom: '0', width: '2px', background: 'var(--border)' }}></div>}
+                
+                <div style={{ background: 'rgba(59, 130, 246, 0.1)', minWidth: '36px', height: '36px', borderRadius: '50%', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, border: '4px solid var(--input-bg)' }}>
+                  <MapPin size={16} />
                 </div>
-                <div>
+                <div style={{ paddingTop: '0.2rem' }}>
                   <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>Pickup Location</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '0.5rem' }}>{ride.pickupLocation || ride.pickupAddress || 'Address not available'}</div>
                   <a href={`https://www.google.com/maps/search/?api=1&query=${ride.pickupLat},${ride.pickupLng}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}>View on Maps (Lat: {ride.pickupLat}, Lng: {ride.pickupLng})</a>
@@ -204,11 +206,11 @@ const RideDetails = () => {
               </div>
               
               {ride.dropLat && ride.dropLng && (
-                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                   <div style={{ background: 'rgba(239, 68, 68, 0.1)', padding: '0.5rem', borderRadius: '50%', color: '#ef4444' }}>
-                     <MapPin size={20} />
+                 <div style={{ display: 'flex', gap: '1.25rem', alignItems: 'flex-start', position: 'relative' }}>
+                   <div style={{ background: 'rgba(239, 68, 68, 0.1)', minWidth: '36px', height: '36px', borderRadius: '50%', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 2, border: '4px solid var(--input-bg)' }}>
+                     <MapPin size={16} />
                    </div>
-                   <div>
+                   <div style={{ paddingTop: '0.2rem' }}>
                      <div style={{ fontWeight: 600, marginBottom: '0.2rem' }}>Drop-off Location</div>
                      <div style={{ color: 'var(--text-muted)', fontSize: '0.95rem', marginBottom: '0.5rem' }}>{ride.dropoffLocation || ride.dropAddress || '(Calculated Drop Location / Coordinates provided)'}</div>
                      <a href={`https://www.google.com/maps/search/?api=1&query=${ride.dropLat},${ride.dropLng}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}>View on Maps (Lat: {ride.dropLat}, Lng: {ride.dropLng})</a>
@@ -216,7 +218,35 @@ const RideDetails = () => {
                  </div>
               )}
            </div>
-        </div>
+
+              {ride.trackingHistory && ride.trackingHistory.length > 0 && (
+                <div style={{ marginTop: '1.5rem', borderTop: '1px solid var(--border)', paddingTop: '1.5rem' }}>
+                  <h4 style={{ fontSize: '1rem', marginBottom: '1rem', fontWeight: 600 }}>Tracking History</h4>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    {ride.trackingHistory.map((track: any, idx: number) => (
+                      <div key={idx} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start', background: 'var(--bg-card)', padding: '1rem', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                        <div style={{ minWidth: '24px', height: '24px', background: 'var(--accent-primary)', color: 'white', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                          {idx + 1}
+                        </div>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600, marginBottom: '0.25rem', display: 'flex', justifyContent: 'space-between' }}>
+                            <span>{track.status}</span>
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{new Date(track.createdAt).toLocaleString()}</span>
+                          </div>
+                          {(track.latitude && track.longitude) ? (
+                            <a href={`https://www.google.com/maps/search/?api=1&query=${track.latitude},${track.longitude}`} target="_blank" rel="noreferrer" style={{ fontSize: '0.85rem', color: 'var(--accent-primary)', textDecoration: 'underline' }}>
+                              Location: {track.latitude}, {track.longitude}
+                            </a>
+                          ) : (
+                            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>No GPS logged</span>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
       </div>
     </div>

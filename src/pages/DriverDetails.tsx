@@ -29,6 +29,9 @@ const DriverDetails = () => {
   const [loadingWallet, setLoadingWallet] = useState(true);
   const [walletError, setWalletError] = useState<string | null>(null);
 
+  const [driverRides, setDriverRides] = useState<any[]>([]);
+  const [loadingRides, setLoadingRides] = useState(false);
+
   React.useEffect(() => {
     // Fetch wallet records for this specific driver
     const fetchWallet = async () => {
@@ -46,7 +49,22 @@ const DriverDetails = () => {
         setLoadingWallet(false);
       }
     };
+    
+    const fetchRides = async () => {
+      if (!state?.driver?.id) return;
+      try {
+        setLoadingRides(true);
+        const res = await axiosInstance.get(`/admin/user-rides/${state.driver.id}`);
+        setDriverRides(res.data?.data || []);
+      } catch (err) {
+        console.error('Failed to fetch driver rides', err);
+      } finally {
+        setLoadingRides(false);
+      }
+    };
+
     fetchWallet();
+    fetchRides();
   }, [state?.driver?.id]);
 
   if (!driver) {
@@ -366,6 +384,35 @@ const DriverDetails = () => {
             );
           })()}
         </div>
+      </div>
+
+      <div className="glass-panel" style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--accent-primary)' }}>Ride History</h3>
+        
+        {loadingRides ? (
+          <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
+            <div className="animate-spin" style={{ width: '24px', height: '24px', border: '3px solid var(--accent-primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+          </div>
+        ) : driverRides.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No rides found for this driver.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {driverRides.map((r: any) => (
+              <div key={r.id} onClick={() => navigate('/rides/' + r.id)} style={{ padding: '1rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="hover-highlight">
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{new Date(r.createdAt).toLocaleString()}</div>
+                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                    <span className={`badge ${(r.status || 'PENDING').toLowerCase()}`}>{r.status}</span>
+                  </div>
+                </div>
+                <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                   <div style={{ color: 'var(--success)', fontWeight: 'bold' }}>₹{r.fare || 0}</div>
+                   <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{r.distance || '0'} km</div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
 
       {statusToUpdate && createPortal(
