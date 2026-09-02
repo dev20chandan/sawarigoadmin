@@ -10,6 +10,7 @@ import UserList from './pages/UserList';
 import DriverVerification from './pages/DriverVerification';
 import DriverDetails from './pages/DriverDetails';
 import RideList from './pages/RideList';
+import RideDetails from './pages/RideDetails';
 import Notifications from './pages/Notifications';
 import Login from './pages/Login';
 import SettingsPage from './pages/Settings';
@@ -115,7 +116,7 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: boolean, set
     { name: 'Dashboard', path: '/', icon: <LayoutDashboard size={20} /> },
     { name: 'Users', path: '/users', icon: <Users size={20} /> },
     { name: 'Drivers', path: '/drivers', icon: <FileCheck size={20} /> },
-    { name: 'Trip Activity', path: '/rides', icon: <RouteIcon size={20} /> },
+    { name: 'Ride History', path: '/rides', icon: <RouteIcon size={20} /> },
     { name: 'Notifications', path: '/notifications', icon: <BellRing size={20} /> },
     { name: 'Support Tickets', path: '/support', icon: <LifeBuoy size={20} /> },
     { name: 'Contacts / Enquiries', path: '/contacts', icon: <MessageSquare size={20} /> },
@@ -202,7 +203,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
       case '/': return 'Platform Overview';
       case '/users': return 'Users Management';
       case '/drivers': return 'Driver Management';
-      case '/rides': return 'Trip Activity';
+      case '/rides': return 'Ride History';
       case '/notifications': return 'Notifications';
       case '/support': return 'Support Tickets';
       case '/contacts': return 'Website Contacts & Enquiries';
@@ -246,6 +247,7 @@ const ProtectedLayout = ({ handleLogout, theme, toggleTheme }: { handleLogout: (
           <Route path="/drivers" element={needsSetup ? <Navigate to="/settings" /> : <DriverVerification />} />
           <Route path="/drivers/:id" element={needsSetup ? <Navigate to="/settings" /> : <DriverDetails />} />
           <Route path="/rides" element={needsSetup ? <Navigate to="/settings" /> : <RideList />} />
+          <Route path="/rides/:id" element={needsSetup ? <Navigate to="/settings" /> : <RideDetails />} />
           <Route path="/notifications" element={needsSetup ? <Navigate to="/settings" /> : <Notifications />} />
           <Route path="/support" element={needsSetup ? <Navigate to="/settings" /> : <SupportRecords />} />
           <Route path="/contacts" element={needsSetup ? <Navigate to="/settings" /> : <Contacts />} />

@@ -1,11 +1,13 @@
 import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, MapPin, Loader2, Route } from 'lucide-react';
+import { Search, Loader2, Route, Trash2 } from 'lucide-react';
 import type { RootState, AppDispatch } from '../store';
 import { fetchRides } from '../store/rideSlice';
 
 const RideList = () => {
   const dispatch = useDispatch<AppDispatch>();
+  const navigate = useNavigate();
   const { rides, meta, loading, error } = useSelector((state: RootState) => state.rides);
   const [search, setSearch] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -47,7 +49,7 @@ const RideList = () => {
   return (
     <div className="animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', gap: '1rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           <div className="form-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
             <Search size={18} color="var(--text-muted)" />
             <input
@@ -66,16 +68,16 @@ const RideList = () => {
           <thead>
             <tr>
               <th>Ride ID</th>
-              <th>Rider Info</th>
+              <th>User Info</th>
               <th>Driver Info</th>
               <th>Status & Fare</th>
               <th>Date</th>
-              <th>Location</th>
+              <th style={{ textAlign: 'center' }}>Actions</th>
             </tr>
           </thead>
           <tbody>
             {filteredRides.map(ride => (
-              <tr key={ride.id}>
+              <tr key={ride.id} className="hover-highlight" onClick={() => navigate(`/rides/${ride.id}`, { state: { ride } })} style={{ cursor: 'pointer' }}>
                 <td style={{ fontWeight: 500, fontSize: '0.9rem' }}>
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
                     <Route size={16} color="var(--accent-primary)" />
@@ -101,11 +103,26 @@ const RideList = () => {
                   {ride.fare && <div style={{ fontWeight: 600 }}>₹{ride.fare}</div>}
                 </td>
                 <td>{new Date(ride.createdAt).toLocaleString()}</td>
-                <td>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}>
-                    <MapPin size={16} color="var(--primary)" />
-                    <a href={`https://www.google.com/maps/search/?api=1&query=${ride.pickupLat},${ride.pickupLng}`} target="_blank" rel="noreferrer" style={{ color: 'var(--accent-primary)', textDecoration: 'underline', fontSize: '0.85rem' }}>View Pickup</a>
-                  </div>
+                <td style={{ textAlign: 'center' }}>
+                  <button 
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--danger)', padding: '0.5rem' }}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (window.confirm('Are you sure you want to delete this ride?')) {
+                        try {
+                          const axiosInstance = (await import('../utils/axiosInstance')).default;
+                          await axiosInstance.delete(`/rides/${ride.id}`);
+                          dispatch(fetchRides({ page: currentPage, limit }));
+                        } catch (err) {
+                          console.error(err);
+                          alert('Failed to delete ride');
+                        }
+                      }
+                    }}
+                    title="Delete Ride"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </td>
               </tr>
             ))}

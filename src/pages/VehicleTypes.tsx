@@ -117,10 +117,10 @@ const VehicleTypes = () => {
                 <td style={{ textAlign: 'center' }}>
                   {vType.image ? (
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <img 
-                        src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`} 
-                        alt="icon" 
-                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }} 
+                      <img
+                        src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`}
+                        alt="icon"
+                        style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
                       />
                     </div>
                   ) : (
@@ -202,9 +202,9 @@ const VehicleTypes = () => {
                 ) : (
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'center', padding: '0.5rem' }}>Upload Icon</div>
                 )}
-                <input 
-                  type="file" 
-                  accept="image/*" 
+                <input
+                  type="file"
+                  accept="image/*"
                   onChange={async (e: any) => {
                     const file = e.target.files[0];
                     if (!file) return;
@@ -216,8 +216,8 @@ const VehicleTypes = () => {
                     } catch (err) {
                       console.error('Upload failed', err);
                     }
-                  }} 
-                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }} 
+                  }}
+                  style={{ position: 'absolute', top: 0, left: 0, width: '100%', height: '100%', opacity: 0, cursor: 'pointer' }}
                 />
               </div>
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.5rem' }}>Category Icon</span>
@@ -228,7 +228,7 @@ const VehicleTypes = () => {
                 className="input"
                 placeholder="Vehicle Name (e.g. SEDAN)"
                 value={formData.name}
-                onChange={e => setFormData({ ...formData, name: e.target.value.toUpperCase(), label: e.target.value })}
+                onChange={e => setFormData({ ...formData, name: e.target.value, label: e.target.value })}
                 style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
               />
             </div>
