@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Users, Car, AlertTriangle, CheckCircle, Loader2 } from 'lucide-react';
+import { Users, Car, CheckCircle, Loader2, CircleDot } from 'lucide-react';
 import type { RootState, AppDispatch } from '../store';
 import { fetchDashboardStats } from '../store/dashboardSlice';
 
@@ -45,18 +45,10 @@ const Dashboard = () => {
 
         <Link to="/drivers" state={{ filterStatus: 'APPROVED' }} className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
           <div className="stat-header">
-            <span>Active Drivers</span>
-            <CheckCircle color="var(--success)" />
+            <span>Online Drivers</span>
+            <CircleDot color="var(--success)" strokeWidth={3} absoluteStrokeWidth />
           </div>
           <div className="stat-value">{stats?.activeDrivers || 0}</div>
-        </Link>
-
-        <Link to="/drivers" state={{ filterStatus: 'PENDING' }} className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
-          <div className="stat-header">
-            <span>Pending Verifications</span>
-            <AlertTriangle color="var(--warning)" />
-          </div>
-          <div className="stat-value">{stats?.pendingVerifications || 0}</div>
         </Link>
 
         <Link to="/users" className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>

@@ -62,7 +62,7 @@ const UserDetails = () => {
           <div style={{ flex: 1, display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1.25rem' }}>
             <div>
               <strong style={{ color: 'var(--text-muted)', fontSize: '0.85rem', display: 'block', marginBottom: '0.2rem' }}>Name</strong>
-              <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-main)' }}>{user.profile?.name || 'Unnamed User'}</div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--text-main)', textTransform: 'capitalize' }}>{user.profile?.name || 'Unnamed User'}</div>
               <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{user.resolvedCode || user.userCode || 'N/A'}</div>
             </div>
             <div>

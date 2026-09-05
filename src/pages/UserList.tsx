@@ -106,7 +106,7 @@ const UserList = () => {
                     </div>
                   </td>
                   <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text-main)' }} title={user.profile?.name || 'Not Provided'}>
+                    <div style={{ fontWeight: 500, color: 'var(--text-main)', textTransform: 'capitalize' }} title={user.profile?.name || 'Not Provided'}>
                       {((user.profile?.name || 'Not Provided').length > 25 ? (user.profile?.name || 'Not Provided').substring(0, 25) + '...' : (user.profile?.name || 'Not Provided'))}
                     </div>
                   </td>

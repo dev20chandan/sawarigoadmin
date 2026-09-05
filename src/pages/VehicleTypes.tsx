@@ -12,9 +12,7 @@ const VehicleTypes = () => {
 
   const [formData, setFormData] = useState({
     name: '',
-    label: '',
     description: '',
-    baseFare: '',
     perKmRate: '',
     seats: '4',
     image: '',
@@ -25,8 +23,9 @@ const VehicleTypes = () => {
     setLoading(true);
     try {
       const res = await axiosInstance.get('/vehicles/types');
-      // The API returns { statusCode, message, body }
-      setVehicleTypes(res.data?.body || []);
+      const list = Array.isArray(res.data?.body) ? res.data.body : (Array.isArray(res.data?.data) ? res.data.data : (Array.isArray(res.data) ? res.data : []));
+      setVehicleTypes(list);
+      setFormData(prev => ({ ...prev, displayOrder: String(list.length + 1) }));
     } catch (err) {
       console.error('Failed to fetch vehicle types', err);
     } finally {
@@ -43,14 +42,12 @@ const VehicleTypes = () => {
       alert('Vehicle image is required. Please upload an image first.');
       return;
     }
-    
+
     try {
       const payload = {
         name: formData.name,
-        label: formData.label,
         description: formData.description,
         seats: Number(formData.seats),
-        baseFare: Number(formData.baseFare),
         perKmRate: Number(formData.perKmRate),
         image: formData.image,
         displayOrder: Number(formData.displayOrder || 0)
@@ -75,7 +72,6 @@ const VehicleTypes = () => {
       fetchData();
     } catch (err: any) {
       console.error('Failed to delete vehicle type', err);
-      // Alert the exact error from the backend so the user knows why it failed
       alert(err.response?.data?.message || 'Failed to delete vehicle type. It may be hardcoded or already deleted.');
     } finally {
       setDeleteData(null);
@@ -98,7 +94,7 @@ const VehicleTypes = () => {
           style={{ padding: '0.5rem 1rem' }}
           onClick={() => {
             setEditingType(null);
-            setFormData({ name: '', label: '', description: '', baseFare: '', perKmRate: '', seats: '4', image: '', displayOrder: '0' });
+            setFormData({ name: '', description: '', perKmRate: '', seats: '4', image: '', displayOrder: String(vehicleTypes.length + 1) });
             setIsModalOpen(true);
           }}
         >
@@ -114,7 +110,6 @@ const VehicleTypes = () => {
               <th style={{ textAlign: 'center', width: '60px' }}>Order</th>
               <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Vehicle Name</th>
               <th style={{ textAlign: 'center' }}>Seats</th>
-              <th style={{ textAlign: 'center' }}>Base Fare</th>
               <th style={{ textAlign: 'center' }}>Per Km Rate</th>
               <th style={{ textAlign: 'center' }}>Action</th>
             </tr>
@@ -142,7 +137,6 @@ const VehicleTypes = () => {
                   {vType.name}
                 </td>
                 <td style={{ textAlign: 'center' }}>{vType.seats}</td>
-                <td style={{ textAlign: 'center' }}>₹{vType.baseFare}</td>
                 <td style={{ textAlign: 'center' }}>₹{vType.perKmRate}</td>
                 <td>
                   <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
@@ -151,9 +145,7 @@ const VehicleTypes = () => {
                         setEditingType(vType);
                         setFormData({
                           name: vType.name || '',
-                          label: vType.label || '',
                           description: vType.description || '',
-                          baseFare: vType.baseFare || '',
                           perKmRate: vType.perKmRate || '',
                           seats: vType.seats || '4',
                           image: vType.image || '',
@@ -245,17 +237,6 @@ const VehicleTypes = () => {
             </div>
 
             <div style={{ marginBottom: '1rem' }}>
-              <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Display Label</label>
-              <input
-                className="input"
-                placeholder="Display Label (e.g. Sedan (4 Seats))"
-                value={formData.label}
-                onChange={e => setFormData({ ...formData, label: e.target.value })}
-                style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
-              />
-            </div>
-
-            <div style={{ marginBottom: '1rem' }}>
               <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Description</label>
               <input
                 className="input"
@@ -266,20 +247,9 @@ const VehicleTypes = () => {
               />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '1rem' }}>
               <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Base Fare</label>
-                <input
-                  type="number"
-                  className="input"
-                  placeholder="Base Fare (₹)"
-                  value={formData.baseFare}
-                  onChange={e => setFormData({ ...formData, baseFare: e.target.value })}
-                  style={{ width: '100%', padding: '0.8rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)' }}
-                />
-              </div>
-              <div>
-                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Per Km Rate</label>
+                <label style={{ display: 'block', marginBottom: '0.5rem', fontSize: '0.85rem', color: 'var(--text-muted)' }}>Per Km Rate (₹)</label>
                 <input
                   type="number"
                   className="input"

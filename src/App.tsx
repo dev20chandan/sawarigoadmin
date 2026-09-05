@@ -4,7 +4,7 @@ import { BrowserRouter, Routes, Route, Link, useLocation, Navigate, useNavigate 
 import { useDispatch, useSelector } from 'react-redux';
 import type { AppDispatch, RootState } from './store';
 import { fetchProfile } from './store/settingsSlice';
-import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, Car, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon, Menu, X, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun, AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon, Menu, X, MessageSquare } from 'lucide-react';
 import Dashboard from './pages/Dashboard';
 import UserList from './pages/UserList';
 import UserDetails from './pages/UserDetails';
@@ -135,9 +135,12 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: boolean, set
       <div className={`mobile-overlay ${isMobileOpen ? 'active' : ''}`} onClick={() => setIsMobileOpen(false)}></div>
       <div className={`sidebar ${isMobileOpen ? 'mobile-open' : ''}`}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <Link to="/" className="brand" onClick={() => setIsMobileOpen(false)}>
-            <Car size={32} />
-            Sawarigo
+          <Link to="/" className="brand" style={{ gap: 0 }} onClick={() => setIsMobileOpen(false)}>
+            <img src="/favicon.png" alt="Sawarigo" style={{ width: '36px', height: '36px', objectFit: 'contain', marginRight: '-0.30rem' }} />
+            <span>
+              <span style={{ color: 'var(--text-main)' }}>awari</span>
+              <span style={{ color: 'var(--accent-primary)' }}>Go</span>
+            </span>
           </Link>
           <button className="mobile-menu-btn" onClick={() => setIsMobileOpen(false)} style={{ display: isMobileOpen ? 'block' : 'none' }}>
             <X size={24} />
@@ -149,8 +152,8 @@ const Sidebar = ({ isMobileOpen, setIsMobileOpen }: { isMobileOpen: boolean, set
               key={link.name}
               to={link.path}
               className={`nav-item ${(link.path === '/' ? location.pathname === '/' :
-                  (link.path === '/cms/pages' ? location.pathname.startsWith('/cms') : location.pathname.startsWith(link.path)))
-                  ? 'active' : ''
+                (link.path === '/cms/pages' ? location.pathname.startsWith('/cms') : location.pathname.startsWith(link.path)))
+                ? 'active' : ''
                 }`}
               onClick={() => setIsMobileOpen(false)}
             >

@@ -154,7 +154,7 @@ const DriverDetails = () => {
         <div style={{ marginBottom: '1.5rem', background: 'var(--input-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
           <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}>Driver Info</h3>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', fontSize: '0.95rem', color: 'var(--text-main)' }}>
-            <div style={{ wordBreak: 'break-word' }}><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.name || 'N/A'}</span></div>
+            <div style={{ wordBreak: 'break-word' }}><strong>Name:</strong> <span style={{ color: 'var(--text-muted)', textTransform: 'capitalize' }}>{driver.name || 'N/A'}</span></div>
             <div style={{ wordBreak: 'break-word' }}><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.phone || 'N/A'}</span></div>
             <div style={{ wordBreak: 'break-word' }}><strong>Email:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.profile?.email || 'N/A'}</span></div>
             <div style={{ wordBreak: 'break-word' }}><strong>Gender:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.profile?.gender || 'N/A'}</span></div>
