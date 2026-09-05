@@ -23,11 +23,19 @@ const UserList = () => {
     dispatch(fetchUsers());
   }, [dispatch]);
 
-  const filteredUsers = users.filter(u =>
-    (u.phoneNumber || '').includes(search) ||
-    (u.profile?.name && u.profile.name.toLowerCase().includes(search.toLowerCase())) ||
-    (u.userCode && u.userCode.toLowerCase().includes(search.toLowerCase()))
-  );
+  const filteredUsers = users.filter(u => {
+    const name = u.name || u.profile?.name || '';
+    const email = u.email || u.profile?.email || '';
+    const phone = u.phoneNumber || u.phone || '';
+    const code = u.userCode || '';
+    const searchLower = search.toLowerCase();
+    return (
+      phone.includes(search) ||
+      name.toLowerCase().includes(searchLower) ||
+      email.toLowerCase().includes(searchLower) ||
+      code.toLowerCase().includes(searchLower)
+    );
+  });
 
   const confirmDelete = async () => {
     if (!userToDelete) return;
@@ -97,21 +105,27 @@ const UserList = () => {
           </thead>
           <tbody>
             {filteredUsers.map((user, index) => {
+              const userName = user.name || user.profile?.name || 'Not Provided';
+              const userEmail = user.email || user.profile?.email || '-';
+              const userImage = user.image || user.profile?.image;
+              const userGender = user.gender || user.profile?.gender || '';
+              const resolvedCode = user.userCode || `U-${String(index + 1).padStart(2, '0')}`;
+
               return (
-                <tr key={user.id} onClick={() => navigate('/users/' + user.id, { state: { user: { ...user, resolvedCode: user.userCode || `U-${String(index + 1).padStart(2, '0')}` } } })} style={{ cursor: 'pointer' }} className="hover-highlight">
-                  <td style={{ textAlign: 'center', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{user.userCode || `U-${String(index + 1).padStart(2, '0')}`}</td>
+                <tr key={user.id} onClick={() => navigate('/users/' + user.id, { state: { user: { ...user, name: userName, email: userEmail, image: userImage, gender: userGender, resolvedCode } } })} style={{ cursor: 'pointer' }} className="hover-highlight">
+                  <td style={{ textAlign: 'center', color: 'var(--text-muted)', whiteSpace: 'nowrap' }}>{resolvedCode}</td>
                   <td style={{ textAlign: 'center' }}>
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
-                      <SmartAvatar src={user.profile?.image} name={user.profile?.name || 'User'} size={36} />
+                      <SmartAvatar src={userImage} name={userName !== 'Not Provided' ? userName : 'User'} size={36} />
                     </div>
                   </td>
                   <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text-main)' }} title={user.profile?.name || 'Not Provided'}>
-                      {((user.profile?.name || 'Not Provided').length > 25 ? (user.profile?.name || 'Not Provided').substring(0, 25) + '...' : (user.profile?.name || 'Not Provided'))}
+                    <div style={{ fontWeight: 500, color: 'var(--text-main)' }} title={userName}>
+                      {userName.length > 25 ? userName.substring(0, 25) + '...' : userName}
                     </div>
                   </td>
-                  <td style={{ textAlign: 'center' }}>{user.phoneNumber}</td>
-                  <td style={{ textAlign: 'center' }}>{user.profile?.email || '-'}</td>
+                  <td style={{ textAlign: 'center' }}>{user.phoneNumber || user.phone || '-'}</td>
+                  <td style={{ textAlign: 'center' }}>{userEmail}</td>
                   <td style={{ textAlign: 'center' }}>
                     <span className={`badge ${(user.status || 'PENDING').toLowerCase()}`}>
                       {user.status || 'PENDING'}
@@ -122,7 +136,13 @@ const UserList = () => {
                       <button onClick={(e) => {
                         e.stopPropagation();
                         setEditingUser(user);
-                        setFormData({ name: user.profile?.name || '', email: user.profile?.email || '', gender: user.profile?.gender || '', status: user.status || 'PENDING', phoneNumber: user.phoneNumber || '' });
+                        setFormData({
+                          name: user.name || user.profile?.name || '',
+                          email: user.email || user.profile?.email || '',
+                          gender: user.gender || user.profile?.gender || '',
+                          status: user.status || 'PENDING',
+                          phoneNumber: user.phoneNumber || user.phone || ''
+                        });
                         setIsModalOpen(true);
                       }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} title="Edit User">
                         <Edit size={16} />
@@ -137,7 +157,7 @@ const UserList = () => {
             })}
             {filteredUsers.length === 0 && (
               <tr>
-                <td colSpan={6} style={{ textAlign: 'center', padding: '2rem' }}>No users found</td>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No users found</td>
               </tr>
             )}
           </tbody>

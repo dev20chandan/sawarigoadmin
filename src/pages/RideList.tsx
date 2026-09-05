@@ -85,14 +85,14 @@ const RideList = () => {
                   </div>
                 </td>
                 <td>
-                  <div>{ride.rider?.profile?.name || 'Unknown Rider'}</div>
-                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ride.rider?.phoneNumber}</div>
+                  <div>{ride.rider?.name || ride.rider?.profile?.name || 'Unknown Rider'}</div>
+                  <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ride.rider?.phoneNumber || ride.rider?.phone}</div>
                 </td>
                 <td>
                   {ride.driver ? (
                     <>
-                      <div>{ride.driver?.profile?.name || 'Unknown Driver'}</div>
-                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber}</div>
+                      <div>{ride.driver?.name || ride.driver?.profile?.name || 'Unknown Driver'}</div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber || ride.driver?.phone}</div>
                     </>
                   ) : (
                     <span style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>Awaiting Driver...</span>

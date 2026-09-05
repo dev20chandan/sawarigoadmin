@@ -187,7 +187,7 @@ const DriverVerification = () => {
                       {((driver.name || 'Not Provided').length > 25 ? (driver.name || 'Not Provided').substring(0, 25) + '...' : (driver.name || 'Not Provided'))}
                     </div>
                   </td>
-                  <td style={{ textAlign: 'center' }}>{driver.profile?.email || '-'}</td>
+                  <td style={{ textAlign: 'center' }}>{driver.email || driver.profile?.email || '-'}</td>
                   <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
                       {(() => {
@@ -225,8 +225,8 @@ const DriverVerification = () => {
                           setFormData({
                             name: driver.name || '',
                             phoneNumber: (driver.phone || driver.phoneNumber || '').replace(/^\+91/, ''),
-                            email: driver.profile?.email || '',
-                            gender: driver.profile?.gender || 'Male',
+                            email: driver.email || driver.profile?.email || '',
+                            gender: driver.gender || driver.profile?.gender || 'Male',
                             vehicleBrand: driver.vehicleDetails?.brand || '',
                             vehicleModel: driver.vehicleDetails?.model || '',
                             vehicleYear: driver.vehicleDetails?.year || '',

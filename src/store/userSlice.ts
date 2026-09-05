@@ -6,9 +6,37 @@ export const fetchUsers = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('/admin/users');
-      return response.data;
+      const data = response.data?.data || response.data;
+      return Array.isArray(data) ? data : [];
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch users');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to fetch users');
+    }
+  }
+);
+
+export const fetchUserDetails = createAsyncThunk(
+  'users/fetchUserDetails',
+  async (userId: string, { rejectWithValue }) => {
+    try {
+      // Try GET /admin/user/:id with fallback to GET /admin/users/:id or /admin/user-data/:id
+      let response;
+      try {
+        response = await axiosInstance.get(`/admin/user/${userId}`);
+      } catch (err: any) {
+        if (err.response && err.response.status === 404) {
+          try {
+            response = await axiosInstance.get(`/admin/users/${userId}`);
+          } catch (e) {
+            response = await axiosInstance.get(`/admin/user-data/${userId}`);
+          }
+        } else {
+          throw err;
+        }
+      }
+      const data = response.data?.data || response.data;
+      return data;
+    } catch (error: any) {
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to fetch user details');
     }
   }
 );
@@ -30,13 +58,8 @@ export const updateUser = createAsyncThunk(
   async ({ id, data }: { id: string, data: any }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(`/admin/user/${id}`, data);
-      // Wait, admin controller update returns the full updated record or { message, user }?
-      // Our backend returns the updated user, but it's typically best to just return the response data
-      // For ease, we can just return `{ id, ...data }` or the response from backend
-      // But based on our current `UserList.tsx` it spread `updated` onto the user.
       return response.data;
     } catch (error: any) {
-       // Just rejecting with error text / object
       return rejectWithValue(error.response?.data || error.message || 'Failed to update user');
     }
   }
@@ -46,13 +69,21 @@ const userSlice = createSlice({
   name: 'users',
   initialState: {
     users: [] as any[],
+    selectedUser: null as any,
     loading: false,
+    loadingDetails: false,
     error: null as string | null,
+    errorDetails: null as string | null,
   },
-  reducers: {},
+  reducers: {
+    clearSelectedUser: (state) => {
+      state.selectedUser = null;
+      state.errorDetails = null;
+    }
+  },
   extraReducers: (builder) => {
     builder
-      // Fetch
+      // Fetch list
       .addCase(fetchUsers.pending, (state) => {
         if (state.users.length === 0) {
           state.loading = true;
@@ -67,18 +98,36 @@ const userSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
       })
+      // Fetch details
+      .addCase(fetchUserDetails.pending, (state) => {
+        state.loadingDetails = true;
+        state.errorDetails = null;
+      })
+      .addCase(fetchUserDetails.fulfilled, (state, action) => {
+        state.loadingDetails = false;
+        state.selectedUser = action.payload;
+      })
+      .addCase(fetchUserDetails.rejected, (state, action) => {
+        state.loadingDetails = false;
+        state.errorDetails = action.payload as string;
+      })
       // Delete
       .addCase(deleteUser.fulfilled, (state, action) => {
         state.users = state.users.filter(u => u.id !== action.payload);
       })
       // Update
       .addCase(updateUser.fulfilled, (state, action) => {
-        // Find and replace the user logic
-        // action.payload should ideally contain the updated user, but let's assume it at least patches
-        const updatedUser = action.payload.profile ? action.payload : { ...action.payload }; // Check backend return structure, earlier it was mapped
-        state.users = state.users.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u);
+        const updatedUser = action.payload?.user ? action.payload.user : (action.payload?.data ? action.payload.data : action.payload);
+        if (updatedUser?.id) {
+          state.users = state.users.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u);
+          if (state.selectedUser?.id === updatedUser.id) {
+            state.selectedUser = { ...state.selectedUser, ...updatedUser };
+          }
+        }
       });
   },
 });
 
+export const { clearSelectedUser } = userSlice.actions;
 export default userSlice.reducer;
+

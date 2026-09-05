@@ -1,21 +1,26 @@
-
-import { API_BASE_URL } from '../config';
-import React, { useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate, useParams } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Check, X, ArrowLeft, Trash2, Ban } from 'lucide-react';
+import { Check, X, ArrowLeft, Trash2, Ban, Star, Loader2, Award } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { RootState, AppDispatch } from '../store';
-import { updateDriverStatus, updateDocumentStatus } from '../store/driverSlice';
+import { fetchDriverDetails, clearSelectedDriver, updateDriverStatus, updateDocumentStatus } from '../store/driverSlice';
 import axiosInstance from '../utils/axiosInstance';
+import { API_BASE_URL } from '../config';
 import DriverLocationHistory from '../components/DriverLocationHistory';
 
 const DriverDetails = () => {
+  const { id } = useParams<{ id: string }>();
   const { state } = useLocation();
   const navigate = useNavigate();
   const dispatch = useDispatch<AppDispatch>();
-  const drivers = useSelector((reduxState: RootState) => reduxState.drivers.drivers);
-  const driver = drivers.find((d: any) => d.id === state?.driver?.id) || state?.driver;
+
+  const { drivers, selectedDriver, loadingDetails } = useSelector((reduxState: RootState) => reduxState.drivers);
+
+  // Derive current driver object from store details, list, or location state
+  const targetId = id || state?.driver?.id || state?.driver?.driverId;
+  const driver = selectedDriver || drivers.find((d: any) => d.id === targetId || d.driverId === targetId || d.userId === targetId) || state?.driver;
+
   const [statusToUpdate, setStatusToUpdate] = useState<{ id: string, status: string } | null>(null);
   const [previewDoc, setPreviewDoc] = useState<any>(null);
   const [zoomScale, setZoomScale] = useState(1);
@@ -26,36 +31,50 @@ const DriverDetails = () => {
   const [docRejectReason, setDocRejectReason] = useState<string>('');
   const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
   const [walletRecords, setWalletRecords] = useState<any[]>([]);
-  const [loadingWallet, setLoadingWallet] = useState(true);
+  const [loadingWallet, setLoadingWallet] = useState(false);
   const [walletError, setWalletError] = useState<string | null>(null);
 
   const [driverRides, setDriverRides] = useState<any[]>([]);
   const [loadingRides, setLoadingRides] = useState(false);
+  const [driverTab, setDriverTab] = useState<'info' | 'gps' | 'wallet' | 'rides' | 'reviews'>('info');
 
-  React.useEffect(() => {
-    // Fetch wallet records for this specific driver
+  useEffect(() => {
+    if (targetId) {
+      dispatch(fetchDriverDetails(targetId));
+    }
+    return () => {
+      dispatch(clearSelectedDriver());
+    };
+  }, [targetId, dispatch]);
+
+  useEffect(() => {
+    const driverId = targetId || driver?.id || driver?.driverId;
+    if (!driverId) return;
+
+    // Fetch wallet records
     const fetchWallet = async () => {
-      if (!state?.driver?.id) return;
       try {
         setLoadingWallet(true);
-        const res = await axiosInstance.get(`/admin/drivers/${state.driver.id}/wallet`);
-        setWalletRecords(Array.isArray(res.data) ? res.data : []);
+        const res = await axiosInstance.get(`/admin/drivers/${driverId}/wallet`);
+        const wData = res.data?.data || res.data;
+        setWalletRecords(Array.isArray(wData) ? wData : []);
         setWalletError(null);
       } catch (err: any) {
         console.error('Failed to fetch wallet:', err);
-        setWalletRecords([]); // Fallback
+        setWalletRecords([]);
         setWalletError(err.response?.data?.message || 'Wallet data not found');
       } finally {
         setLoadingWallet(false);
       }
     };
     
+    // Fetch rides if not present in driver object
     const fetchRides = async () => {
-      if (!state?.driver?.id) return;
+      if (driver?.recentRides && driver.recentRides.length > 0) return;
       try {
         setLoadingRides(true);
-        const res = await axiosInstance.get(`/admin/user-rides/${state.driver.id}`);
-        setDriverRides(res.data?.data || []);
+        const res = await axiosInstance.get(`/admin/user-rides/${driverId}`);
+        setUserRides(res.data?.data || res.data || []);
       } catch (err) {
         console.error('Failed to fetch driver rides', err);
       } finally {
@@ -65,16 +84,44 @@ const DriverDetails = () => {
 
     fetchWallet();
     fetchRides();
-  }, [state?.driver?.id]);
+  }, [targetId, driver?.id, driver?.driverId, driver?.recentRides]);
+
+  function setUserRides(data: any) {
+    setDriverRides(Array.isArray(data) ? data : []);
+  }
+
+  if (loadingDetails && !driver) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '60vh' }}>
+        <Loader2 className="animate-spin" size={36} color="var(--accent-primary)" />
+      </div>
+    );
+  }
 
   if (!driver) {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         No driver information available. <br /><br />
-        <button className="btn btn-outline" onClick={() => navigate('/drivers')}>Go Back</button>
+        <button className="btn btn-outline" onClick={() => navigate(-1)}>Go Back</button>
       </div>
     );
   }
+
+  // Raw documents extraction helper
+  const rawDocsList = driver.rawDocs || driver.documents || (driver.docs ? Object.entries(driver.docs).map(([k, v]) => ({ id: k, documentType: k, fileUrl: v, status: 'APPROVED' })) : []);
+
+  const stats = driver.stats || {
+    totalRides: driver.totalRides || 0,
+    completedRides: driver.completedRides || 0,
+    rating: driver.rating || 5.0,
+    totalReviews: driver.totalReviews || 0,
+    totalEarnings: driver.totalEarnings || 0
+  };
+
+  const ridesToDisplay = (driver.recentRides && driver.recentRides.length > 0) ? driver.recentRides : driverRides;
+  const reviewsList = driver.reviews || [];
+
+  const activeDriverId = driver.id || driver.driverId || targetId;
 
   const handleUpdateStatus = (id: string, status: string) => {
     setStatusToUpdate({ id, status });
@@ -99,9 +146,8 @@ const DriverDetails = () => {
       setStatusToUpdate(null);
       setRejectReason('');
 
-      // Optionally navigate back after approval
       if (statusToUpdate.status === 'approved') {
-        setTimeout(() => navigate('/drivers'), 1000);
+        setTimeout(() => navigate(-1), 1000);
       }
     } catch (err) {
       console.error(err);
@@ -118,7 +164,7 @@ const DriverDetails = () => {
 
     setDocUpdating({ id: docId, status });
     try {
-      await dispatch(updateDocumentStatus({ driverId: driver.id, docId, status, reason })).unwrap();
+      await dispatch(updateDocumentStatus({ driverId: activeDriverId, docId, status, reason })).unwrap();
       setPreviewDoc(null);
       setToastMessage({
         text: `Document successfully ${status.toLowerCase()}`,
@@ -138,71 +184,112 @@ const DriverDetails = () => {
 
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
-      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-        <button onClick={() => navigate('/drivers')} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
+      {/* Header Bar */}
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0, flexWrap: 'wrap' }}>
+        <button onClick={() => navigate(-1)} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
           <ArrowLeft size={18} /> Back
         </button>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          Captain Details
-          <span className={`badge ${driver.status?.toLowerCase() || 'pending'}`} style={{ textTransform: 'capitalize', fontSize: '0.8rem' }}>
-            {driver.status?.toLowerCase() || 'pending'}
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
+          Captain Details ({driver.driverCode || 'Driver'})
+          <span className={`badge ${driver.status?.toLowerCase() || driver.rawStatus?.toLowerCase() || 'pending'}`} style={{ textTransform: 'capitalize', fontSize: '0.8rem' }}>
+            {driver.status?.toLowerCase() || driver.rawStatus?.toLowerCase() || 'pending'}
           </span>
+          {typeof driver.isOnline !== 'undefined' && (
+            <span style={{ fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '0.4rem', background: 'var(--input-bg)', padding: '0.3rem 0.8rem', borderRadius: '20px', border: '1px solid var(--border)' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: driver.isOnline ? 'var(--success)' : '#9ca3af' }}></span>
+              {driver.isOnline ? 'Online' : 'Offline'}
+            </span>
+          )}
         </h1>
       </div>
 
+      {/* Stats Summary Bar */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '1rem', marginBottom: '1.5rem' }}>
+        <div style={{ background: 'var(--input-bg)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Rides</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--text-main)', marginTop: '0.2rem' }}>{stats.totalRides ?? 0}</div>
+        </div>
+        <div style={{ background: 'var(--input-bg)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Completed Rides</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--success)', marginTop: '0.2rem' }}>{stats.completedRides ?? 0}</div>
+        </div>
+        <div style={{ background: 'var(--input-bg)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Rating ({stats.totalReviews || 0} reviews)</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#f59e0b', marginTop: '0.2rem', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+            <Star size={20} fill="#f59e0b" /> {stats.rating || 5.0}
+          </div>
+        </div>
+        <div style={{ background: 'var(--input-bg)', padding: '1rem 1.25rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
+          <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Total Earnings</div>
+          <div style={{ fontSize: '1.5rem', fontWeight: 700, color: 'var(--accent-primary)', marginTop: '0.2rem' }}>
+            ₹{(stats.totalEarnings || driver.totalEarnings || 0).toLocaleString('en-IN')}
+          </div>
+        </div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{ display: 'flex', gap: '1.5rem', borderBottom: '1px solid var(--border)', marginBottom: '1.5rem', overflowX: 'auto', paddingBottom: '0.4rem' }}>
+        <button onClick={() => setDriverTab('info')} style={{ background: 'transparent', border: 'none', padding: '0.5rem 0.5rem', cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: driverTab === 'info' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: driverTab === 'info' ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: driverTab === 'info' ? 600 : 400 }}>Info & Documents</button>
+        <button onClick={() => setDriverTab('gps')} style={{ background: 'transparent', border: 'none', padding: '0.5rem 0.5rem', cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: driverTab === 'gps' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: driverTab === 'gps' ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: driverTab === 'gps' ? 600 : 400 }}>Live GPS & History</button>
+        <button onClick={() => setDriverTab('wallet')} style={{ background: 'transparent', border: 'none', padding: '0.5rem 0.5rem', cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: driverTab === 'wallet' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: driverTab === 'wallet' ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: driverTab === 'wallet' ? 600 : 400 }}>Earnings & Wallet</button>
+        <button onClick={() => setDriverTab('rides')} style={{ background: 'transparent', border: 'none', padding: '0.5rem 0.5rem', cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: driverTab === 'rides' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: driverTab === 'rides' ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: driverTab === 'rides' ? 600 : 400 }}>Ride History</button>
+        <button onClick={() => setDriverTab('reviews')} style={{ background: 'transparent', border: 'none', padding: '0.5rem 0.5rem', cursor: 'pointer', whiteSpace: 'nowrap', borderBottom: driverTab === 'reviews' ? '2px solid var(--accent-primary)' : '2px solid transparent', color: driverTab === 'reviews' ? 'var(--text-main)' : 'var(--text-muted)', fontWeight: driverTab === 'reviews' ? 600 : 400 }}>Reviews ({reviewsList.length})</button>
+      </div>
+
+      {(driverTab === 'info' || driverTab === 'gps' || driverTab === 'wallet') && (
       <div className="glass-panel" style={{ padding: '1.5rem', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+        {driverTab === 'info' && (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
         <div style={{ marginBottom: '1.5rem', background: 'var(--input-bg)', padding: '1.5rem', borderRadius: '12px', border: '1px solid var(--border)' }}>
-          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}>Driver Info</h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', fontSize: '0.95rem', color: 'var(--text-main)' }}>
-            <div style={{ wordBreak: 'break-word' }}><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.name || 'N/A'}</span></div>
-            <div style={{ wordBreak: 'break-word' }}><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.phone || 'N/A'}</span></div>
-            <div style={{ wordBreak: 'break-word' }}><strong>Email:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.profile?.email || 'N/A'}</span></div>
-            <div style={{ wordBreak: 'break-word' }}><strong>Gender:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.profile?.gender || 'N/A'}</span></div>
+          <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}>Driver Profile</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', fontSize: '0.95rem', color: 'var(--text-main)' }}>
+            <div style={{ wordBreak: 'break-word' }}><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.name || driver.profile?.name || 'N/A'}</span></div>
+            <div style={{ wordBreak: 'break-word' }}><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.phoneNumber || driver.phone || 'N/A'}</span></div>
+            <div style={{ wordBreak: 'break-word' }}><strong>Email:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.email || driver.profile?.email || 'N/A'}</span></div>
+            <div style={{ wordBreak: 'break-word' }}><strong>Gender:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.gender || driver.profile?.gender || 'N/A'}</span></div>
+            <div style={{ wordBreak: 'break-word' }}><strong>Date of Birth:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.profile?.dob ? new Date(driver.profile.dob).toLocaleDateString() : 'N/A'}</span></div>
+            <div style={{ wordBreak: 'break-word' }}><strong>Address:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.profile?.address || driver.address || driver.location || 'N/A'}</span></div>
             <div style={{ wordBreak: 'break-word' }}><strong>Joined Date:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.createdAt ? new Date(driver.createdAt).toLocaleDateString() : 'N/A'}</span></div>
           </div>
 
-          <h3 style={{ fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}>Vehicle Details</h3>
-          {driver.vehicleDetails ? (
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', fontSize: '0.95rem', color: 'var(--text-main)' }}>
-              <div><strong>Type:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.vehicleDetails.type || 'N/A'}</span></div>
-              <div style={{ gridColumn: 'span 2', wordBreak: 'break-word' }}>
-                <strong>RC / Plate Number:</strong> <span style={{ padding: '0.2rem 0.5rem', background: 'rgba(255,140,66,0.15)', border: '1px dashed var(--accent-primary)', borderRadius: '4px', marginLeft: '0.5rem', color: 'var(--text-main)', display: 'inline-block', marginTop: '0.2rem', fontWeight: 600 }}>{driver.vehicleDetails.plateNumber || 'N/A'}</span>
+          <h3 style={{ fontSize: '1.1rem', marginTop: '1.5rem', marginBottom: '1rem', color: 'var(--accent-primary)' }}>Vehicle Information</h3>
+          {driver.vehicleDetails || driver.vehicle ? (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1.5rem', fontSize: '0.95rem', color: 'var(--text-main)' }}>
+              <div><strong>Vehicle Type:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.vehicleType || driver.vehicleDetails?.type || 'CAR'}</span></div>
+              <div>
+                <strong>RC / Plate Number:</strong> 
+                <span style={{ padding: '0.2rem 0.5rem', background: 'rgba(255,140,66,0.15)', border: '1px dashed var(--accent-primary)', borderRadius: '4px', marginLeft: '0.5rem', color: 'var(--text-main)', display: 'inline-block', fontWeight: 600 }}>
+                  {driver.vehicleDetails?.plateNumber || driver.vehicle || 'N/A'}
+                </span>
               </div>
+              {driver.vehicleDetails?.brand && <div><strong>Brand / Model:</strong> <span style={{ color: 'var(--text-muted)' }}>{driver.vehicleDetails.brand} {driver.vehicleDetails.model || ''} ({driver.vehicleDetails.year || ''})</span></div>}
             </div>
           ) : (
             <p style={{ color: 'var(--text-muted)', fontSize: '0.95rem' }}>No vehicle details registered.</p>
           )}
         </div>
 
+        {/* Driver Documents */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          {(!driver.rawDocs || driver.rawDocs.length === 0) ? (
+          <h3 style={{ fontSize: '1.1rem', color: 'var(--accent-primary)' }}>Uploaded Verification Documents</h3>
+          {(rawDocsList.length === 0) ? (
             <p style={{ color: 'var(--text-muted)', padding: '1.5rem', background: 'var(--input-bg)', borderRadius: '12px', border: '1px solid var(--border)' }}>No documents uploaded by driver.</p>
           ) : (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
-              {[...driver.rawDocs].sort((a: any, b: any) => {
-                const order = [
-                  'RC', 'RC_FRONT', 'RC_BACK',
-                  'AADHAAR', 'AADHAAR_FRONT', 'AADHAAR_BACK',
-                  'AADHAR', 'AADHAR_FRONT', 'AADHAR_BACK',
-                  'DRIVING_LICENSE', 'DRIVING_LICENSE_FRONT', 'DL_FRONT', 'DRIVING_LICENSE_BACK', 'DL_BACK',
-                  'POLLUTION', 'POLLUTION_FRONT', 'POLLUTION_BACK',
-                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
-                  'INSURANCE', 'INSURANCE_FRONT', 'INSURANCE_BACK',
-                  'SELFIE',
-                ];
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.5rem' }}>
+              {[...rawDocsList].sort((a: any, b: any) => {
+                const order = ['AADHAAR', 'DRIVING_LICENSE', 'VEHICLE_REGISTRATION', 'RC', 'INSURANCE', 'SELFIE'];
                 const aType = (a.documentType || '').toUpperCase();
                 const bType = (b.documentType || '').toUpperCase();
-                let aIndex = order.indexOf(aType);
-                let bIndex = order.indexOf(bType);
-                if (aIndex === -1) aIndex = 999;
-                if (bIndex === -1) bIndex = 999;
-                if (aIndex !== bIndex) return aIndex - bIndex;
-                return aType.localeCompare(bType);
+                let aIdx = order.findIndex(o => aType.includes(o));
+                let bIdx = order.findIndex(o => bType.includes(o));
+                if (aIdx === -1) aIdx = 999;
+                if (bIdx === -1) bIdx = 999;
+                return aIdx - bIdx;
               }).map((doc: any) => (
                 <div key={doc.id || doc.documentType + Math.random()} style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: 'var(--bg-card)', padding: '1.25rem', borderRadius: '12px', border: '1px solid var(--border)', boxShadow: 'var(--glass-shadow)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontWeight: 600, fontSize: '1rem', color: 'var(--accent-primary)', textTransform: 'capitalize', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                      {doc.documentType.replace(/_/g, ' ')}
+                      {(doc.documentType || 'DOCUMENT').replace(/_/g, ' ')}
                       {doc.status && doc.status !== 'PENDING' && (
                         <span className={`badge ${doc.status.toLowerCase()}`} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>{doc.status}</span>
                       )}
@@ -212,19 +299,16 @@ const DriverDetails = () => {
                             e.stopPropagation();
                             if (window.confirm('Delete this document?')) {
                               try {
-                                await axiosInstance.delete(`/admin/drivers/${driver.id}/documents/${doc.id}`);
-                                // Opt to refresh manually or let Redux do it if we map it
-                                setToastMessage({ text: 'Document deleted! Please refresh.', type: 'success' });
+                                await axiosInstance.delete(`/admin/drivers/${activeDriverId}/documents/${doc.id}`);
+                                setToastMessage({ text: 'Document deleted!', type: 'success' });
                                 setTimeout(() => setToastMessage(null), 3000);
                               } catch (err) {
                                 console.error(err);
                               }
                             }
                           }}
-                          style={{ background: 'var(--danger)', border: 'none', color: 'white', padding: '0.2rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: '0.5rem', opacity: 0.85, transition: 'opacity 0.2s' }}
+                          style={{ background: 'var(--danger)', border: 'none', color: 'white', padding: '0.2rem', borderRadius: '4px', cursor: 'pointer', display: 'flex', alignItems: 'center', marginLeft: '0.5rem', opacity: 0.85 }}
                           title="Delete Document"
-                          onMouseOver={e => e.currentTarget.style.opacity = '1'}
-                          onMouseOut={e => e.currentTarget.style.opacity = '0.85'}
                         >
                           <Trash2 size={14} />
                         </button>
@@ -234,16 +318,14 @@ const DriverDetails = () => {
                       style={{ fontSize: '0.8rem', color: 'var(--text-muted)', background: 'var(--input-bg)', padding: '0.2rem 0.6rem', borderRadius: '12px', border: '1px solid var(--border)', cursor: 'pointer' }}
                       onClick={() => { setPreviewDoc(doc); setZoomScale(1); }}
                     >
-                      Tap to preview
+                      Preview
                     </span>
                   </div>
                   <img
-                    src={doc.fileUrl.startsWith('/') ? `${API_BASE_URL}${doc.fileUrl}` : doc.fileUrl}
+                    src={doc.fileUrl ? (doc.fileUrl.startsWith('/') ? `${API_BASE_URL}${doc.fileUrl}` : doc.fileUrl) : '/placeholder.png'}
                     alt={doc.documentType}
                     style={{ width: '100%', height: '200px', objectFit: 'cover', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer', transition: 'transform 0.2s' }}
                     onClick={() => { setPreviewDoc(doc); setZoomScale(1); }}
-                    onMouseOver={e => (e.currentTarget.style.transform = 'scale(1.02)')}
-                    onMouseOut={e => (e.currentTarget.style.transform = 'scale(1)')}
                   />
                   {doc.status !== 'APPROVED' && (
                     <div style={{ display: 'flex', gap: '0.75rem', marginTop: '0.5rem' }}>
@@ -253,7 +335,7 @@ const DriverDetails = () => {
                         disabled={!!docUpdating}
                         style={{ flex: 1, padding: '0.5rem', color: 'var(--danger)', borderColor: 'var(--danger)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                       >
-                        {docUpdating?.id === doc.id && docUpdating?.status === 'REJECTED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <X size={16} />} Reject
+                        {docUpdating?.id === doc.id && docUpdating?.status === 'REJECTED' ? <Loader2 className="animate-spin" size={16} /> : <X size={16} />} Reject
                       </button>
                       <button
                         onClick={() => updateDocStatus(doc.id, 'APPROVED')}
@@ -261,7 +343,7 @@ const DriverDetails = () => {
                         disabled={!!docUpdating}
                         style={{ flex: 1, padding: '0.5rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.25rem' }}
                       >
-                        {docUpdating?.id === doc.id && docUpdating?.status === 'APPROVED ALL' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : <Check size={16} />} Approve
+                        {docUpdating?.id === doc.id && docUpdating?.status === 'APPROVED' ? <Loader2 className="animate-spin" size={16} /> : <Check size={16} />} Approve
                       </button>
                     </div>
                   )}
@@ -270,21 +352,25 @@ const DriverDetails = () => {
             </div>
           )}
         </div>
+        </div>
+        )}
 
-        {/* GPS Location history tracker */}
-        <div style={{ marginTop: '2.5rem' }}>
+        {driverTab === 'gps' && (
+        <div>
           <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             Live GPS & Location History Tracker
           </h3>
-          <DriverLocationHistory driverId={state?.driver?.id} />
+          <DriverLocationHistory driverId={activeDriverId} />
         </div>
+        )}
 
-        <div style={{ marginTop: '2.5rem' }}>
+        {driverTab === 'wallet' && (
+        <div>
           <h3 style={{ fontSize: '1.25rem', marginBottom: '1rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            Driver Earnings & Wallet
+            Driver Earnings & Wallet Transactions
           </h3>
           <div className="table-container" style={{ margin: 0, border: '1px solid var(--border)', borderRadius: '12px', background: 'var(--bg-card)' }}>
-            <table style={{ width: '100%', minWidth: '1000px' }}>
+            <table style={{ width: '100%', minWidth: '900px' }}>
               <thead>
                 <tr style={{ background: 'var(--input-bg)' }}>
                   <th>Driver ID</th>
@@ -293,9 +379,9 @@ const DriverDetails = () => {
                   <th>Debit</th>
                   <th>Recharge</th>
                   <th>Withdrawal</th>
-                  <th>Refund/Adjustment</th>
+                  <th>Adjustment</th>
                   <th style={{ color: 'var(--text-main)' }}>Balance</th>
-                  <th>Transaction Date</th>
+                  <th>Date</th>
                 </tr>
               </thead>
               <tbody>
@@ -312,7 +398,7 @@ const DriverDetails = () => {
                 ) : (
                   walletRecords.map((txn, i) => (
                     <tr key={txn.id || i} className="hover-highlight">
-                      <td style={{ fontFamily: 'monospace' }}>{txn.driverId?.substring(0, 8) || driver.id?.substring(0, 8)}</td>
+                      <td style={{ fontFamily: 'monospace' }}>{txn.driverId?.substring(0, 8) || activeDriverId?.substring(0, 8)}</td>
                       <td style={{ fontFamily: 'monospace' }}>{txn.rideId?.substring(0, 8) || '-'}</td>
                       <td style={{ color: 'var(--success)', fontWeight: 600 }}>{txn.credit ? `+₹${txn.credit.toFixed(2)}` : '-'}</td>
                       <td style={{ color: 'var(--danger)', fontWeight: 600 }}>{txn.debit ? `-₹${txn.debit.toFixed(2)}` : '-'}</td>
@@ -330,52 +416,44 @@ const DriverDetails = () => {
             </table>
           </div>
         </div>
+        )}
 
-        <div style={{ paddingTop: '1.5rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center' }}>
+        {driverTab === 'info' && (
+        <div style={{ paddingTop: '1.5rem', marginTop: '1.5rem', borderTop: '1px solid var(--border)', display: 'flex', gap: '1rem', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap' }}>
           {(() => {
-            const isSelfieUploaded = driver.rawDocs && driver.rawDocs.some((d: any) => d.documentType === 'SELFIE');
-            const allDocsApproved = driver.rawDocs && driver.rawDocs.length > 0 && driver.rawDocs.every((d: any) => d.status === 'APPROVED');
+            const isSelfieUploaded = rawDocsList.some((d: any) => (d.documentType || '').toUpperCase().includes('SELFIE'));
+            const currentStatus = (driver.status || driver.rawStatus || 'PENDING').toUpperCase();
 
             return (
               <>
-                {!isSelfieUploaded ? (
-                  <div style={{ color: 'var(--warning)', fontSize: '0.9rem', marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {!isSelfieUploaded && (
+                  <div style={{ color: 'var(--warning)', fontSize: '0.9rem', marginRight: 'auto' }}>
                     ⚠️ Driver selfie has not been uploaded yet.
                   </div>
-                ) : !allDocsApproved ? (
-                  <div style={{ color: 'var(--warning)', fontSize: '0.9rem', marginRight: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    ⚠️ Approving the driver will automatically approve their documents.
-                  </div>
-                ) : null}
-                {driver.status?.toUpperCase() === 'SUSPENDED' && (
+                )}
+                {currentStatus === 'SUSPENDED' && (
                   <button
                     className="btn btn-outline"
                     style={{ color: 'var(--success)', borderColor: 'var(--success)', padding: '0.6rem 2rem', fontSize: '1rem' }}
-                    onClick={() => handleUpdateStatus(driver.id, 'approved')}
+                    onClick={() => handleUpdateStatus(activeDriverId, 'approved')}
                   >
                     <Check size={20} /> Activate
                   </button>
                 )}
-                {driver.status?.toUpperCase() === 'APPROVED' && (
+                {currentStatus === 'APPROVED' && (
                   <button
                     className="btn btn-outline"
                     style={{ color: '#f59e0b', borderColor: '#f59e0b', padding: '0.6rem 2rem', fontSize: '1rem' }}
-                    onClick={() => handleUpdateStatus(driver.id, 'suspended')}
+                    onClick={() => handleUpdateStatus(activeDriverId, 'suspended')}
                   >
                     <Ban size={20} /> Suspend
                   </button>
                 )}
-                {driver.status?.toUpperCase() !== 'APPROVED' && driver.status?.toUpperCase() !== 'SUSPENDED' && isSelfieUploaded && (
+                {currentStatus !== 'APPROVED' && currentStatus !== 'SUSPENDED' && (
                   <button
                     className="btn btn-primary"
-                    style={{
-                      padding: '0.6rem 2rem',
-                      fontSize: '1rem',
-                      opacity: 1,
-                      cursor: 'pointer'
-                    }}
-                    onClick={() => handleUpdateStatus(driver.id, 'approved')}
-                    title="Approve Driver and all Documents"
+                    style={{ padding: '0.6rem 2rem', fontSize: '1rem' }}
+                    onClick={() => handleUpdateStatus(activeDriverId, 'approved')}
                   >
                     <Check size={20} /> Approve All
                   </button>
@@ -384,37 +462,73 @@ const DriverDetails = () => {
             );
           })()}
         </div>
+        )}
       </div>
+      )}
 
-      <div className="glass-panel" style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
-        <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--accent-primary)' }}>Ride History</h3>
+      {/* Ride History Tab */}
+      {driverTab === 'rides' && (
+      <div className="glass-panel" style={{ padding: '1.5rem', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--accent-primary)' }}>Driver Ride History</h3>
         
         {loadingRides ? (
           <div style={{ display: 'flex', justifyContent: 'center', padding: '2rem' }}>
-            <div className="animate-spin" style={{ width: '24px', height: '24px', border: '3px solid var(--accent-primary)', borderTopColor: 'transparent', borderRadius: '50%' }}></div>
+            <Loader2 className="animate-spin" size={28} color="var(--accent-primary)" />
           </div>
-        ) : driverRides.length === 0 ? (
+        ) : ridesToDisplay.length === 0 ? (
           <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No rides found for this driver.</div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '400px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-            {driverRides.map((r: any) => (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '0.5rem' }}>
+            {ridesToDisplay.map((r: any) => (
               <div key={r.id} onClick={() => navigate('/rides/' + r.id)} style={{ padding: '1rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="hover-highlight">
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{new Date(r.createdAt).toLocaleString()}</div>
-                  <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <span className={`badge ${(r.status || 'PENDING').toLowerCase()}`}>{r.status}</span>
+                    <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{r.createdAt ? new Date(r.createdAt).toLocaleString('en-IN') : '-'}</span>
                   </div>
+                  {r.pickupLocation && <div style={{ fontSize: '0.85rem', marginTop: '0.3rem' }}><strong>Pickup:</strong> {r.pickupLocation}</div>}
+                  {r.dropoffLocation && <div style={{ fontSize: '0.85rem' }}><strong>Dropoff:</strong> {r.dropoffLocation}</div>}
+                  {r.riderName && <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Rider: {r.riderName}</div>}
                 </div>
                 <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-                   <div style={{ color: 'var(--success)', fontWeight: 'bold' }}>₹{r.fare || 0}</div>
-                   <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{r.distance || '0'} km</div>
+                   <div style={{ color: 'var(--success)', fontWeight: 'bold' }}>Fare: ₹{r.fare || 0}</div>
+                   {r.earning && <div style={{ color: 'var(--accent-primary)', fontSize: '0.85rem', fontWeight: 600 }}>Earning: ₹{r.earning}</div>}
                 </div>
               </div>
             ))}
           </div>
         )}
       </div>
+      )}
 
+      {/* Reviews Tab */}
+      {driverTab === 'reviews' && (
+      <div className="glass-panel" style={{ padding: '1.5rem', background: 'var(--bg-main)', border: '1px solid var(--glass-border)', display: 'flex', flexDirection: 'column' }}>
+        <h3 style={{ fontSize: '1.1rem', marginBottom: '1.5rem', color: 'var(--accent-primary)', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Award size={20} /> Driver Reviews & Ratings
+        </h3>
+        {reviewsList.length === 0 ? (
+          <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No reviews submitted for this driver yet.</div>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            {reviewsList.map((rev: any) => (
+              <div key={rev.id} style={{ padding: '1.25rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#f59e0b', fontWeight: 700 }}>
+                    <Star size={18} fill="#f59e0b" /> {rev.rating} / 5
+                  </div>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{rev.createdAt ? new Date(rev.createdAt).toLocaleString('en-IN') : ''}</span>
+                </div>
+                {rev.comment && <p style={{ fontSize: '0.95rem', margin: 0, color: 'var(--text-main)', fontStyle: 'italic' }}>"{rev.comment}"</p>}
+                {rev.riderName && <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>— {rev.riderName}</div>}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+      )}
+
+      {/* Modals & Portals */}
       {statusToUpdate && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
           <div className="glass-panel animate-fade-in" style={{ width: '380px', padding: '2rem', textAlign: 'center', background: 'var(--bg-main)' }}>
@@ -437,20 +551,10 @@ const DriverDetails = () => {
                   onChange={(e) => setRejectReason(e.target.value)}
                   style={{ width: '100%', padding: '0.6rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', outline: 'none' }}
                 >
-                  <option value="">-- No Document Specified --</option>
-                  {driver.rawDocs
-                    ?.filter((doc: any) => doc.status !== 'APPROVED')
-                    .map((doc: any) => {
-                      const prettyName = doc.documentType.replace(/_/g, ' ');
-                      return (
-                        <option key={doc.id || doc.documentType} value={`Rejected Document: ${prettyName}`}>
-                          {prettyName} rejected
-                        </option>
-                      );
-                    })}
-                  {(driver.rawDocs?.filter((doc: any) => doc.status !== 'APPROVED').length || 0) > 1 && (
-                    <option value="Multiple documents are invalid/rejected">Multiple invalid documents</option>
-                  )}
+                  <option value="">-- Select Reason --</option>
+                  <option value="Invalid documents uploaded">Invalid documents uploaded</option>
+                  <option value="Vehicle details mismatch">Vehicle details mismatch</option>
+                  <option value="Identity verification failed">Identity verification failed</option>
                 </select>
               </div>
             )}
@@ -468,7 +572,7 @@ const DriverDetails = () => {
                 style={{ flex: 1, padding: '0.75rem', background: statusToUpdate.status === 'approved' ? 'var(--success)' : statusToUpdate.status === 'suspended' ? '#f59e0b' : 'var(--danger)', color: 'white' }}
                 disabled={isUpdatingStatus}
               >
-                {isUpdatingStatus ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent', margin: 'auto' }} className="animate-spin" /> : 'Confirm'}
+                {isUpdatingStatus ? <Loader2 className="animate-spin" size={16} style={{ margin: 'auto' }} /> : 'Confirm'}
               </button>
             </div>
           </div>
@@ -478,9 +582,6 @@ const DriverDetails = () => {
 
       {previewDoc && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.85)', zIndex: 10000, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }} onClick={() => setPreviewDoc(null)}>
-
-
-
           {previewDoc.status !== 'APPROVED' && (
             <div style={{ position: 'absolute', bottom: '2rem', left: '50%', transform: 'translateX(-50%)', display: 'flex', gap: '0.75rem', width: 'auto', alignItems: 'center', zIndex: 10002 }} onClick={e => e.stopPropagation()}>
               <div style={{ display: 'flex', gap: '0.75rem', background: 'var(--bg-main)', padding: '0.5rem', borderRadius: '50px', boxShadow: '0 4px 15px rgba(0,0,0,0.4)', border: '1px solid var(--border)' }}>
@@ -490,16 +591,15 @@ const DriverDetails = () => {
                   disabled={!!docUpdating}
                   style={{ padding: '0.4rem 1.25rem', borderRadius: '50px', color: 'var(--danger)', borderColor: 'var(--danger)', background: 'transparent', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  {docUpdating?.id === previewDoc.id && docUpdating?.status === 'REJECTED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : null} Reject
+                  Reject
                 </button>
-
                 <button
                   onClick={() => updateDocStatus(previewDoc.id, 'APPROVED')}
                   className="btn btn-primary"
                   disabled={!!docUpdating || previewDoc.status === 'APPROVED'}
                   style={{ padding: '0.4rem 1.25rem', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '0.4rem' }}
                 >
-                  {docUpdating?.id === previewDoc.id && docUpdating?.status === 'APPROVED' ? <div style={{ width: '16px', height: '16px', borderRadius: '50%', border: '2px solid currentColor', borderRightColor: 'transparent' }} className="animate-spin" /> : null} {previewDoc.status === 'APPROVED' ? 'Approved' : 'Approve'}
+                  {previewDoc.status === 'APPROVED' ? 'Approved' : 'Approve'}
                 </button>
               </div>
             </div>
@@ -507,14 +607,14 @@ const DriverDetails = () => {
 
           <button
             onClick={() => setPreviewDoc(null)}
-            style={{ position: 'absolute', top: '2rem', right: '2rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', boxShadow: '0 4px 10px rgba(0,0,0,0.3)', transition: 'background 0.2s', zIndex: 10001 }}
+            style={{ position: 'absolute', top: '2rem', right: '2rem', background: 'var(--danger)', color: 'white', border: 'none', borderRadius: '50%', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', zIndex: 10001 }}
           >
             <X size={24} />
           </button>
 
           <div className="animate-fade-in" style={{ position: 'relative', width: '100%', height: '100%', overflow: 'auto', display: 'flex', alignItems: zoomScale === 1 ? 'center' : 'flex-start', justifyContent: zoomScale === 1 ? 'center' : 'flex-start', padding: zoomScale === 1 ? '0' : '2rem' }} onClick={() => setPreviewDoc(null)}>
             <img
-              src={previewDoc.fileUrl.startsWith('/') ? `${API_BASE_URL}${previewDoc.fileUrl}` : previewDoc.fileUrl}
+              src={previewDoc.fileUrl ? (previewDoc.fileUrl.startsWith('/') ? `${API_BASE_URL}${previewDoc.fileUrl}` : previewDoc.fileUrl) : '/placeholder.png'}
               alt="Preview"
               style={{
                 maxWidth: zoomScale === 1 ? '90vw' : 'none',
@@ -522,10 +622,8 @@ const DriverDetails = () => {
                 width: zoomScale === 1 ? 'auto' : '150%',
                 objectFit: 'contain',
                 cursor: zoomScale === 1 ? 'zoom-in' : 'zoom-out',
-                transition: 'width 0.3s ease',
                 borderRadius: '8px',
-                margin: 'auto',
-                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                margin: 'auto'
               }}
               onClick={e => { e.stopPropagation(); setZoomScale(s => s === 1 ? 2 : 1); }}
             />
@@ -549,13 +647,13 @@ const DriverDetails = () => {
               <X size={24} /> Reject Document
             </h2>
             <p style={{ color: 'var(--text-muted)', marginBottom: '1rem', fontSize: '0.95rem' }}>
-              Please provide a reason for rejecting this document. It will be sent to the driver directly.
+              Please provide a reason for rejecting this document:
             </p>
             <textarea
               autoFocus
               value={docRejectReason}
               onChange={(e) => setDocRejectReason(e.target.value)}
-              placeholder="e.g. Image is blurry, details not visible..."
+              placeholder="e.g. Image is blurry, document expired..."
               rows={3}
               style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid var(--border)', background: 'var(--input-bg)', color: 'var(--text-main)', marginBottom: '1.5rem', resize: 'vertical' }}
             />

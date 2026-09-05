@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Plus, Edit, Trash2, Loader2, X } from 'lucide-react';
 import axiosInstance from '../utils/axiosInstance';
+import { API_BASE_URL } from '../config';
 
 const VehicleTypes = () => {
   const [vehicleTypes, setVehicleTypes] = useState<any[]>([]);
@@ -126,7 +127,7 @@ const VehicleTypes = () => {
                   {vType.image ? (
                     <div style={{ display: 'flex', justifyContent: 'center' }}>
                       <img
-                        src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`}
+                        src={vType.image.startsWith('http') ? vType.image : `${import.meta.env.VITE_API_URL || API_BASE_URL}${vType.image.startsWith('/') ? '' : '/'}${vType.image}`}
                         alt="icon"
                         style={{ width: '36px', height: '36px', borderRadius: '50%', objectFit: 'cover' }}
                       />
@@ -204,7 +205,7 @@ const VehicleTypes = () => {
               <div style={{ width: '80px', height: '80px', borderRadius: '50%', background: 'var(--input-bg)', border: '1px dashed var(--border)', overflow: 'hidden', position: 'relative', cursor: 'pointer' }}>
                 {formData.image ? (
                   <>
-                    <img src={formData.image.startsWith('http') ? formData.image : `${import.meta.env.VITE_API_URL || 'https://api.sawarigo.in'}${formData.image.startsWith('/') ? '' : '/'}${formData.image}`} alt="Type" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    <img src={formData.image.startsWith('http') ? formData.image : `${import.meta.env.VITE_API_URL || API_BASE_URL}${formData.image.startsWith('/') ? '' : '/'}${formData.image}`} alt="Type" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(0,0,0,0.5)', padding: '4px', display: 'flex', justifyContent: 'center' }}>
                       <Edit size={14} color="#fff" />
                     </div>

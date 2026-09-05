@@ -1,7 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { Search, Loader2 } from 'lucide-react';
-import { API_BASE_URL } from '../config';
+import axiosInstance from '../utils/axiosInstance';
 import './RideFare.css'; 
 
 // SVG Star component
@@ -43,14 +43,8 @@ export default function RatingsAndReviews() {
 
   const fetchReviews = async () => {
     try {
-      const token = localStorage.getItem('adminToken');
-      const response = await fetch(`${API_BASE_URL}/admin/reviews`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-      const data = await response.json();
-      setReviews(Array.isArray(data) ? data : []);
+      const response = await axiosInstance.get('/admin/reviews');
+      setReviews(Array.isArray(response.data) ? response.data : []);
     } catch (error) {
       console.error('Error fetching reviews:', error);
     } finally {

@@ -36,7 +36,7 @@ const RideDetails = () => {
     try {
       setLoading(true);
       await axiosInstance.delete(`/rides/${id}`);
-      navigate('/rides');
+      navigate(-1);
     } catch (err: any) {
       console.error(err);
       setError(err.response?.data?.message || 'Failed to delete ride');
@@ -53,7 +53,7 @@ const RideDetails = () => {
   if (error) {
     return <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--danger)' }}>
       {error} <br /><br />
-      <button className="btn btn-outline" onClick={() => navigate('/rides')}>Go Back</button>
+      <button className="btn btn-outline" onClick={() => navigate(-1)}>Go Back</button>
     </div>;
   }
 
@@ -61,7 +61,7 @@ const RideDetails = () => {
     return (
       <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--text-muted)' }}>
         No ride information available. <br /><br />
-        <button className="btn btn-outline" onClick={() => navigate('/rides')}>Go Back</button>
+        <button className="btn btn-outline" onClick={() => navigate(-1)}>Go Back</button>
       </div>
     );
   }
@@ -82,7 +82,7 @@ const RideDetails = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-        <button onClick={() => navigate('/rides')} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
+        <button onClick={() => navigate(-1)} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
           <ArrowLeft size={18} /> Back
         </button>
         <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -158,9 +158,9 @@ const RideDetails = () => {
             </h3>
             {ride.rider ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
-                <div><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.rider?.profile?.name || 'Unknown'}</span></div>
-                <div><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.rider?.phoneNumber || 'Unknown'}</span></div>
-                <div><strong>Email:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.rider?.profile?.email || 'N/A'}</span></div>
+                <div><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.rider?.name || ride.rider?.profile?.name || 'Unknown'}</span></div>
+                <div><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.rider?.phoneNumber || ride.rider?.phone || 'Unknown'}</span></div>
+                <div><strong>Email:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.rider?.email || ride.rider?.profile?.email || 'N/A'}</span></div>
               </div>
             ) : (
               <div style={{ color: 'var(--text-muted)' }}>No user information</div>
@@ -174,8 +174,8 @@ const RideDetails = () => {
             </h3>
             {ride.driver ? (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.95rem' }}>
-                <div><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.profile?.name || 'Unknown'}</span></div>
-                <div><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber || 'Unknown'}</span></div>
+                <div><strong>Name:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.name || ride.driver?.profile?.name || 'Unknown'}</span></div>
+                <div><strong>Phone:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver?.phoneNumber || ride.driver?.phone || 'Unknown'}</span></div>
                 {ride.driver?.vehicles && ride.driver.vehicles.length > 0 && (
                    <div><strong>Vehicle:</strong> <span style={{ color: 'var(--text-muted)' }}>{ride.driver.vehicles[0].plateNumber || 'N/A'} ({ride.driver.vehicles[0].type || 'N/A'})</span></div>
                 )}
