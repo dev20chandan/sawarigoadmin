@@ -7,8 +7,8 @@ import { fetchProfile } from './store/settingsSlice';
 import {
   LayoutDashboard, Users, FileCheck, BellRing, LogOut, Moon, Sun,
   AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon,
-  Menu, MessageSquare, User, FileText, Tag, Truck, Star, Ban,
-  IndianRupee, ChevronRight, PanelLeftClose,
+  Menu, MessageSquare, User, FileText, Tag, Truck, Star,
+  ChevronRight, PanelLeftClose,
   ArrowLeft
 } from 'lucide-react';
 
@@ -238,9 +238,6 @@ const SidebarDrawer = ({
       items: [
         { name: 'Ride History', path: '/rides', icon: <RouteIcon size={19} /> },
         { name: 'Vehicle Types', path: '/vehicle-types', icon: <Truck size={19} /> },
-        { name: 'Ride Fares', path: '/ride-fares', icon: <FileText size={19} /> },
-        { name: 'Wallet Ledger', path: '/wallet-ledger', icon: <IndianRupee size={19} /> },
-        { name: 'Cancellations', path: '/cancellations', icon: <Ban size={19} /> },
         { name: 'Coupons', path: '/coupons', icon: <Tag size={19} /> }
       ]
     },
