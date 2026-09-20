@@ -9,7 +9,7 @@ import {
   AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon,
   Menu, MessageSquare, User, FileText, Tag, Truck, Star,
   ChevronRight, PanelLeftClose,
-  ArrowLeft, BookOpen
+  ArrowLeft
 } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
