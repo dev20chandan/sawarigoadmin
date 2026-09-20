@@ -7,17 +7,18 @@ export const fetchAllPages = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('/admin/pages');
-      // Force it to be an array and index them.
-      let arr = Array.isArray(response.data) ? response.data : [response.data];
+      const raw = response.data?.body || response.data?.data || response.data;
+      const arr = Array.isArray(raw) ? raw : (raw && typeof raw === 'object' ? Object.values(raw) : []);
       const pagesDict: Record<string, any> = {};
       arr.forEach((p: any) => {
-          if (p && p.slug) {
-              pagesDict[p.slug] = p;
-          }
+        if (p && p.slug) {
+          pagesDict[p.slug] = p;
+        }
       });
       return pagesDict;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch custom pages');
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to fetch custom pages';
+      return rejectWithValue(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   }
 );
@@ -27,15 +28,14 @@ export const updatePage = createAsyncThunk(
   async ({ slug, payload }: { slug: string; payload: any }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(`/admin/pages/${slug}`, payload);
-      // If backend returns a basic success message without the full page model,
-      // we merge the updated payload manually into the returned object.
-      let responseData = response.data || {};
+      let responseData = response.data?.body || response.data?.data || response.data || {};
       if (!responseData.content && payload.content) {
-          responseData = { ...responseData, ...payload };
+        responseData = { ...responseData, ...payload };
       }
       return { slug, data: responseData };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to update custom page');
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to update custom page';
+      return rejectWithValue(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   }
 );
@@ -46,12 +46,14 @@ export const fetchFaqs = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.get('/admin/faqs');
-      if (Array.isArray(response.data)) {
-        return response.data;
+      const raw = response.data?.body || response.data?.data || response.data;
+      if (Array.isArray(raw)) {
+        return raw;
       }
       return [];
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to fetch FAQs');
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to fetch FAQs';
+      return rejectWithValue(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   }
 );
@@ -61,9 +63,10 @@ export const addFaq = createAsyncThunk(
   async (payload: any, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post('/admin/faqs', payload);
-      return response.data;
+      return response.data?.body || response.data?.data || response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to add FAQ');
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to add FAQ';
+      return rejectWithValue(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   }
 );
@@ -73,9 +76,10 @@ export const updateFaq = createAsyncThunk(
   async ({ id, payload }: { id: string; payload: any }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(`/admin/faqs/${id}`, payload);
-      return response.data;
+      return response.data?.body || response.data?.data || response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to update FAQ');
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to update FAQ';
+      return rejectWithValue(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   }
 );
@@ -87,7 +91,8 @@ export const deleteFaq = createAsyncThunk(
       await axiosInstance.delete(`/admin/faqs/${id}`);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to delete FAQ');
+      const errMsg = error.response?.data?.message || error.response?.data || error.message || 'Failed to delete FAQ';
+      return rejectWithValue(typeof errMsg === 'string' ? errMsg : JSON.stringify(errMsg));
     }
   }
 );

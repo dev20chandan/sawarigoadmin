@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Loader2, Plus, Edit, Trash2, X, FileText, BookOpen, ChevronDown, ChevronUp, CheckCircle } from 'lucide-react';
+import { Loader2, Plus, Edit, Trash2, X, FileText, BookOpen, ChevronDown, ChevronUp, CheckCircle, AlertCircle } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import { useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +24,7 @@ const CmsFaq = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingFaq, setEditingFaq] = useState<any>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [faqToDelete, setFaqToDelete] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -46,6 +47,7 @@ const CmsFaq = () => {
     if (!formData.question.trim() || !formData.answer.trim() || formData.answer === '<p><br></p>') return;
 
     setSaving(true);
+    setErrorMessage(null);
     try {
       if (editingFaq) {
         await dispatch(updateFaq({ id: editingFaq.id, payload: formData })).unwrap();
@@ -56,10 +58,13 @@ const CmsFaq = () => {
       setTimeout(() => {
         setIsModalOpen(false);
         setSuccessMessage(null);
+        setErrorMessage(null);
         setSaving(false);
       }, 1500);
-    } catch (err) {
+    } catch (err: any) {
       console.error(err);
+      const msg = typeof err === 'string' ? err : (err?.message || err?.error || 'Failed to save FAQ');
+      setErrorMessage(msg);
       setSaving(false);
     }
   };
@@ -190,6 +195,13 @@ const CmsFaq = () => {
               <div className="animate-fade-in" style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <CheckCircle size={20} />
                 {successMessage}
+              </div>
+            )}
+
+            {errorMessage && (
+              <div className="animate-fade-in" style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <AlertCircle size={20} />
+                {errorMessage}
               </div>
             )}
 

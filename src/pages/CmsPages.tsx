@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactQuill from 'react-quill-new';
 import 'react-quill-new/dist/quill.snow.css';
-import { Loader2, Save, FileText, CheckCircle, BookOpen } from 'lucide-react';
+import { Loader2, Save, FileText, CheckCircle, BookOpen, AlertCircle } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from '../store';
@@ -17,11 +17,12 @@ const CmsPages = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const dispatch = useDispatch<AppDispatch>();
-  const { pages, loading } = useSelector((state: RootState) => state.cms);
+  const { pages, loading, error: fetchError } = useSelector((state: RootState) => state.cms);
 
   const [activeSlug, setActiveSlug] = useState(location.state?.slug || 'about-us');
   const [saving, setSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -37,6 +38,7 @@ const CmsPages = () => {
 
   useEffect(() => {
     setSaveSuccess(false);
+    setSaveError(null);
   }, [activeSlug]);
 
   useEffect(() => {
@@ -60,12 +62,16 @@ const CmsPages = () => {
     const hardcodedTitle = availablePages.find(p => p.slug === activeSlug)?.title || 'Custom Page';
     
     setSaving(true);
+    setSaveError(null);
+    setSaveSuccess(false);
     try {
       await dispatch(updatePage({ slug: activeSlug, payload: { ...formData, title: hardcodedTitle } })).unwrap();
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
-    } catch(err) {
+    } catch(err: any) {
       console.error(err);
+      const errMsg = typeof err === 'string' ? err : (err?.message || err?.error || 'Failed to save page');
+      setSaveError(errMsg);
     } finally {
       setSaving(false);
     }
@@ -116,6 +122,25 @@ const CmsPages = () => {
           <div style={{ background: 'rgba(16, 185, 129, 0.1)', color: 'var(--success)', border: '1px solid rgba(16, 185, 129, 0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
             <CheckCircle size={20} />
             Page content successfully saved!
+          </div>
+        )}
+
+        {saveError && (
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <AlertCircle size={20} />
+            {saveError}
+          </div>
+        )}
+
+        {fetchError && (
+          <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <AlertCircle size={20} />
+              <span>Failed to load page: {fetchError}</span>
+            </div>
+            <button type="button" className="btn btn-outline" style={{ padding: '0.35rem 0.75rem', fontSize: '0.85rem' }} onClick={() => dispatch(fetchAllPages())}>
+              Retry
+            </button>
           </div>
         )}
 

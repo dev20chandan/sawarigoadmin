@@ -9,7 +9,7 @@ import {
   AlertCircle, Loader2, Route as RouteIcon, Settings as SettingsIcon,
   Menu, MessageSquare, User, FileText, Tag, Truck, Star,
   ChevronRight, PanelLeftClose,
-  ArrowLeft
+  ArrowLeft, BookOpen
 } from 'lucide-react';
 
 import Dashboard from './pages/Dashboard';
@@ -253,6 +253,7 @@ const SidebarDrawer = ({
       title: 'CMS & Settings',
       items: [
         { name: 'CMS Pages', path: '/cms/pages', icon: <FileText size={19} /> },
+        // { name: 'CMS FAQs', path: '/cms/faqs', icon: <BookOpen size={19} /> },
         { name: 'Settings', path: '/settings', icon: <SettingsIcon size={19} /> }
       ]
     }
@@ -260,7 +261,8 @@ const SidebarDrawer = ({
 
   const isLinkActive = (path: string) => {
     if (path === '/') return location.pathname === '/';
-    if (path === '/cms/pages') return location.pathname.startsWith('/cms');
+    if (path === '/cms/pages') return location.pathname === '/cms/pages';
+    if (path === '/cms/faqs') return location.pathname === '/cms/faqs';
     return location.pathname.startsWith(path);
   };
 
