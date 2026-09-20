@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/axiosInstance';
 
 export const fetchUsers = createAsyncThunk(
@@ -17,27 +17,22 @@ export const deleteUser = createAsyncThunk(
   'users/deleteUser',
   async (userId: string, { rejectWithValue }) => {
     try {
-      await axiosInstance.delete(`/admin/user/${userId}`);
+      await axiosInstance.delete(`/admin/users/${userId}`);
       return userId;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to delete user');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to delete user');
     }
   }
 );
 
 export const updateUser = createAsyncThunk(
   'users/updateUser',
-  async ({ id, data }: { id: string, data: any }, { rejectWithValue }) => {
+  async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
     try {
-      const response = await axiosInstance.put(`/admin/user/${id}`, data);
-      // Wait, admin controller update returns the full updated record or { message, user }?
-      // Our backend returns the updated user, but it's typically best to just return the response data
-      // For ease, we can just return `{ id, ...data }` or the response from backend
-      // But based on our current `UserList.tsx` it spread `updated` onto the user.
-      return response.data;
+      const response = await axiosInstance.put(`/admin/users/${id}`, data);
+      return response.data?.data || response.data;
     } catch (error: any) {
-       // Just rejecting with error text / object
-      return rejectWithValue(error.response?.data || error.message || 'Failed to update user');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || error.message || 'Failed to update user');
     }
   }
 );
@@ -73,10 +68,10 @@ const userSlice = createSlice({
       })
       // Update
       .addCase(updateUser.fulfilled, (state, action) => {
-        // Find and replace the user logic
-        // action.payload should ideally contain the updated user, but let's assume it at least patches
-        const updatedUser = action.payload.profile ? action.payload : { ...action.payload }; // Check backend return structure, earlier it was mapped
-        state.users = state.users.map(u => u.id === updatedUser.id ? { ...u, ...updatedUser } : u);
+        const updatedUser = action.payload?.data || action.payload;
+        if (updatedUser && updatedUser.id) {
+          state.users = state.users.map(u => (u.id === updatedUser.id ? { ...u, ...updatedUser } : u));
+        }
       });
   },
 });

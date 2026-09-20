@@ -1,4 +1,4 @@
-import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+﻿import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axiosInstance from '../utils/axiosInstance';
 
 export const fetchDrivers = createAsyncThunk(
@@ -17,11 +17,10 @@ export const addDriver = createAsyncThunk(
   'drivers/addDriver',
   async (data: any, { rejectWithValue }) => {
     try {
-      // DriverVerification.tsx calls endpoint POST /admin/drivers
       const response = await axiosInstance.post('/admin/drivers', data);
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to add driver');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to add driver');
     }
   }
 );
@@ -31,9 +30,9 @@ export const updateDriver = createAsyncThunk(
   async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.put(`/admin/drivers/${id}`, data);
-      return response.data;
+      return response.data?.data || response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to update driver');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to update driver');
     }
   }
 );
@@ -45,7 +44,7 @@ export const deleteDriver = createAsyncThunk(
       await axiosInstance.delete(`/admin/drivers/${id}`);
       return id;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to delete driver');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to delete driver');
     }
   }
 );
@@ -57,7 +56,7 @@ export const updateDriverStatus = createAsyncThunk(
       const response = await axiosInstance.post(`/admin/drivers/${id}/status`, { status });
       return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to update driver status');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to update driver status');
     }
   }
 );
@@ -67,9 +66,9 @@ export const updateDocumentStatus = createAsyncThunk(
   async ({ driverId, docId, status, reason }: { driverId: string; docId: string; status: string; reason?: string }, { rejectWithValue }) => {
     try {
       const response = await axiosInstance.post(`/admin/drivers/${driverId}/documents/${docId}/status`, { status, reason });
-      return { driverId, docId, status, data: response.data }; // Assume response has updated payload or we just manually update array
+      return { driverId, docId, status, data: response.data };
     } catch (error: any) {
-      return rejectWithValue(error.response?.data || 'Failed to update document status');
+      return rejectWithValue(error.response?.data?.message || error.response?.data || 'Failed to update document status');
     }
   }
 );
@@ -99,7 +98,7 @@ const driverSlice = createSlice({
       })
       // Add
       .addCase(addDriver.fulfilled, (state, action) => {
-        state.drivers.push(action.payload);
+        state.drivers.unshift(action.payload);
       })
       // Delete
       .addCase(deleteDriver.fulfilled, (state, action) => {
@@ -107,8 +106,10 @@ const driverSlice = createSlice({
       })
       // Update
       .addCase(updateDriver.fulfilled, (state, action) => {
-        const updatedDriver = action.payload.data ? action.payload.data : action.payload;
-        state.drivers = state.drivers.map(d => (d.id === updatedDriver.id ? updatedDriver : d));
+        const updatedDriver = action.payload?.data || action.payload;
+        if (updatedDriver && updatedDriver.id) {
+          state.drivers = state.drivers.map(d => (d.id === updatedDriver.id ? { ...d, ...updatedDriver } : d));
+        }
       })
       // Update Status
       .addCase(updateDriverStatus.fulfilled, (state, action) => {
@@ -120,7 +121,7 @@ const driverSlice = createSlice({
         const { driverId, docId, status } = action.payload;
         const driver = state.drivers.find(d => d.id === driverId);
         if (driver && driver.rawDocs) {
-           driver.rawDocs = driver.rawDocs.map((doc: any) => doc.id === docId ? { ...doc, status: status.toUpperCase() } : doc);
+          driver.rawDocs = driver.rawDocs.map((doc: any) => (doc.id === docId ? { ...doc, status: status.toUpperCase() } : doc));
         }
       });
   },

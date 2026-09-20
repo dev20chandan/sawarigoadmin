@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, Check, X, Loader2, Trash2, Edit } from 'lucide-react';
+import { Search, Check, X, Loader2, Trash2, Edit, AlertCircle } from 'lucide-react';
 import { SmartAvatar } from '../App';
 import type { RootState, AppDispatch } from '../store';
 import { fetchDrivers, deleteDriver, updateDriver, addDriver, updateDriverStatus } from '../store/driverSlice';
@@ -19,6 +19,9 @@ const DriverVerification = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [editingDriver, setEditingDriver] = useState<any>(null);
   const [driverToDelete, setDriverToDelete] = useState<string | null>(null);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [statusToUpdate, setStatusToUpdate] = useState<{ id: string, status: string } | null>(null);
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
@@ -78,11 +81,17 @@ const DriverVerification = () => {
 
   const confirmDelete = async () => {
     if (!driverToDelete) return;
+    setIsDeleting(true);
+    setDeleteError(null);
     try {
       await dispatch(deleteDriver(driverToDelete)).unwrap();
       setDriverToDelete(null);
-    } catch (err) {
+      dispatch(fetchDrivers());
+    } catch (err: any) {
       console.error('Failed to delete driver', err);
+      setDeleteError(typeof err === 'string' ? err : (err?.message || 'Failed to delete driver'));
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -214,7 +223,7 @@ const DriverVerification = () => {
                   </td>
                   <td style={{ whiteSpace: 'nowrap' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'nowrap' }}>
-                      {driver.status?.toUpperCase() === 'APPROVED' && (
+                      
                         <button onClick={(e) => {
                           e.stopPropagation();
                           setEditingDriver(driver);
@@ -241,7 +250,6 @@ const DriverVerification = () => {
                         }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} title="Edit Driver">
                           <Edit size={16} />
                         </button>
-                      )}
                       <button onClick={(e) => { e.stopPropagation(); setDriverToDelete(driver.id); }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', color: 'var(--danger)', borderColor: 'var(--danger)', fontSize: '0.8rem' }} title="Delete Driver">
                         <Trash2 size={16} />
                       </button>
@@ -313,6 +321,13 @@ const DriverVerification = () => {
                 <X size={24} />
               </button>
             </div>
+
+            {saveError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem', borderRadius: '8px', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                <AlertCircle size={18} />
+                {saveError}
+              </div>
+            )}
 
             <div style={{ display: 'grid', gridTemplateColumns: '120px 1fr 1fr', gap: '1rem' }}>
               <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }}>
@@ -477,18 +492,22 @@ const DriverVerification = () => {
                   .filter(([_, url]) => url)
                   .map(([type, url]) => ({ documentType: type, fileUrl: url }));
 
-                const submitData = { ...formData, phoneNumber: `+91${formData.phoneNumber.trim()}`, documents: formattedDocs };
+                const cleanPhone = formData.phoneNumber.replace(/^\+91/, '').trim();
+                const submitData = { ...formData, phoneNumber: `+91${cleanPhone}`, documents: formattedDocs };
 
                 try {
                   setIsSaving(true);
+                  setSaveError(null);
                   if (editingDriver) {
                     await dispatch(updateDriver({ id: editingDriver.id, data: submitData })).unwrap();
                   } else {
                     await dispatch(addDriver(submitData)).unwrap();
                   }
                   setIsModalOpen(false);
-                } catch (err) {
+                  dispatch(fetchDrivers());
+                } catch (err: any) {
                   console.error('Failed to save driver:', err);
+                  setSaveError(typeof err === 'string' ? err : (err?.message || 'Failed to save driver'));
                 } finally {
                   setIsSaving(false);
                 }
@@ -509,9 +528,17 @@ const DriverVerification = () => {
             <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.5 }}>
               Are you sure you want to delete this driver? This action cannot be undone.
             </p>
+            {deleteError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <AlertCircle size={16} />
+                {deleteError}
+              </div>
+            )}
             <div style={{ display: 'flex', gap: '1rem' }}>
-              <button onClick={() => setDriverToDelete(null)} className="btn btn-outline" style={{ flex: 1, padding: '0.75rem' }}>Cancel</button>
-              <button onClick={confirmDelete} className="btn btn-primary" style={{ flex: 1, padding: '0.75rem', background: 'var(--danger)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)' }}>Delete</button>
+              <button onClick={() => setDriverToDelete(null)} className="btn btn-outline" style={{ flex: 1, padding: '0.75rem' }} disabled={isDeleting}>Cancel</button>
+              <button onClick={confirmDelete} className="btn btn-primary" style={{ flex: 1, padding: '0.75rem', background: 'var(--danger)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)' }} disabled={isDeleting}>
+                {isDeleting ? <Loader2 size={16} className="animate-spin" /> : 'Delete'}
+              </button>
             </div>
           </div>
         </div>,

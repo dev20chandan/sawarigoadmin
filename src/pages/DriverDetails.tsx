@@ -2,10 +2,10 @@ import { API_BASE_URL } from '../config';
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Check, X, ArrowLeft, Trash2, Ban, Navigation, FileText, IndianRupee, Route } from 'lucide-react';
+import { Check, X, ArrowLeft, Trash2, Ban, Navigation, FileText, IndianRupee, Route, Edit, AlertCircle, Loader2 } from 'lucide-react';
 import { createPortal } from 'react-dom';
 import type { RootState, AppDispatch } from '../store';
-import { updateDriverStatus, updateDocumentStatus } from '../store/driverSlice';
+import { updateDriverStatus, updateDocumentStatus, deleteDriver, updateDriver, fetchDrivers } from '../store/driverSlice';
 import axiosInstance from '../utils/axiosInstance';
 import DriverLocationHistory from '../components/DriverLocationHistory';
 
@@ -33,6 +33,59 @@ const DriverDetails = () => {
 
   const [driverRides, setDriverRides] = useState<any[]>([]);
   const [loadingRides, setLoadingRides] = useState(false);
+
+  // Edit / Delete Captain State
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteDriverModalOpen, setIsDeleteDriverModalOpen] = useState(false);
+  const [editFormData, setEditFormData] = useState({
+    name: '',
+    phoneNumber: '',
+    email: '',
+    gender: 'Male',
+    status: 'PENDING',
+    vehicleType: 'CAR',
+    vehiclePlate: ''
+  });
+  const [isSavingDriver, setIsSavingDriver] = useState(false);
+  const [isDeletingDriver, setIsDeletingDriver] = useState(false);
+  const [editSaveError, setEditSaveError] = useState<string | null>(null);
+  const [driverDeleteError, setDriverDeleteError] = useState<string | null>(null);
+
+  const handleSaveDriver = async () => {
+    setIsSavingDriver(true);
+    setEditSaveError(null);
+    try {
+      const cleanPhone = editFormData.phoneNumber.replace(/^\+91/, '').trim();
+      const submitData = {
+        ...editFormData,
+        phoneNumber: `+91${cleanPhone}`
+      };
+      await dispatch(updateDriver({ id: driver.id, data: submitData })).unwrap();
+      await dispatch(fetchDrivers());
+      setToastMessage({ text: 'Driver updated successfully', type: 'success' });
+      setTimeout(() => setToastMessage(null), 3000);
+      setIsEditModalOpen(false);
+    } catch (err: any) {
+      console.error('Failed to update driver', err);
+      setEditSaveError(typeof err === 'string' ? err : (err?.message || 'Failed to update driver'));
+    } finally {
+      setIsSavingDriver(false);
+    }
+  };
+
+  const handleDeleteDriver = async () => {
+    setIsDeletingDriver(true);
+    setDriverDeleteError(null);
+    try {
+      await dispatch(deleteDriver(driver.id)).unwrap();
+      await dispatch(fetchDrivers());
+      navigate('/drivers');
+    } catch (err: any) {
+      console.error('Failed to delete driver', err);
+      setDriverDeleteError(typeof err === 'string' ? err : (err?.message || 'Failed to delete driver'));
+      setIsDeletingDriver(false);
+    }
+  };
 
   React.useEffect(() => {
     const fetchWallet = async () => {
@@ -139,16 +192,47 @@ const DriverDetails = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
-      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', gap: '1rem', flexShrink: 0 }}>
-        <button onClick={() => navigate('/drivers')} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
-          <ArrowLeft size={18} /> Back
-        </button>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, flex: 1, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          Captain Details
-          <span className={`badge ${driver.status?.toLowerCase() || 'pending'}`} style={{ textTransform: 'capitalize', fontSize: '0.8rem' }}>
-            {driver.status?.toLowerCase() || 'pending'}
-          </span>
-        </h1>
+      <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem', flexShrink: 0 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+          <button onClick={() => navigate('/drivers')} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
+            <ArrowLeft size={18} /> Back
+          </button>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            Captain Details
+            <span className={`badge ${driver.status?.toLowerCase() || 'pending'}`} style={{ textTransform: 'capitalize', fontSize: '0.8rem' }}>
+              {driver.status?.toLowerCase() || 'pending'}
+            </span>
+          </h1>
+        </div>
+
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center' }}>
+          <button
+            onClick={() => {
+              setEditFormData({
+                name: driver.profile?.name || driver.name || '',
+                phoneNumber: (driver.phone || driver.phoneNumber || '').replace(/^\+91/, ''),
+                email: driver.profile?.email || '',
+                gender: driver.profile?.gender || 'Male',
+                status: driver.status?.toUpperCase() || 'PENDING',
+                vehicleType: driver.vehicleDetails?.type || 'CAR',
+                vehiclePlate: driver.vehicleDetails?.plateNumber || driver.vehicle || ''
+              });
+              setEditSaveError(null);
+              setIsEditModalOpen(true);
+            }}
+            className="btn btn-outline"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem' }}
+          >
+            <Edit size={16} /> Edit Captain
+          </button>
+          <button
+            onClick={() => { setDriverDeleteError(null); setIsDeleteDriverModalOpen(true); }}
+            className="btn btn-outline"
+            style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1rem', color: 'var(--danger)', borderColor: 'var(--danger)' }}
+          >
+            <Trash2 size={16} /> Delete Captain
+          </button>
+        </div>
       </div>
 
       {/* Tabs Navigation */}
@@ -633,6 +717,105 @@ const DriverDetails = () => {
                 disabled={!docRejectReason.trim()}
               >
                 Confirm Reject
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+      {/* Edit Captain Modal */}
+      {isEditModalOpen && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)', padding: '1rem', overflowY: 'auto' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '100%', maxWidth: '480px', padding: '2rem', background: 'var(--bg-main)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+              <h2 style={{ fontSize: '1.25rem', fontWeight: 600 }}>Edit Captain Info</h2>
+              <button onClick={() => setIsEditModalOpen(false)} style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}>
+                <X size={24} />
+              </button>
+            </div>
+
+            {editSaveError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.9rem' }}>
+                <AlertCircle size={18} />
+                {editSaveError}
+              </div>
+            )}
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Full Name</label>
+              <input type="text" className="form-control" value={editFormData.name} onChange={e => setEditFormData({ ...editFormData, name: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }} />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Phone Number</label>
+              <input type="text" className="form-control" value={editFormData.phoneNumber} onChange={e => setEditFormData({ ...editFormData, phoneNumber: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }} />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '1rem' }}>
+              <label style={{ display: 'block', marginBottom: '0.5rem' }}>Email</label>
+              <input type="email" className="form-control" value={editFormData.email} onChange={e => setEditFormData({ ...editFormData, email: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }} />
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Gender</label>
+                <select className="form-control" value={editFormData.gender} onChange={e => setEditFormData({ ...editFormData, gender: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }}>
+                  <option value="Male">Male</option>
+                  <option value="Female">Female</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Status</label>
+                <select className="form-control" value={editFormData.status} onChange={e => setEditFormData({ ...editFormData, status: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }}>
+                  <option value="APPROVED">APPROVED</option>
+                  <option value="PENDING">PENDING</option>
+                  <option value="REJECTED">REJECTED</option>
+                  <option value="SUSPENDED">SUSPENDED</option>
+                </select>
+              </div>
+            </div>
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1.5rem' }}>
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Vehicle Type</label>
+                <input type="text" className="form-control" value={editFormData.vehicleType} onChange={e => setEditFormData({ ...editFormData, vehicleType: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }} />
+              </div>
+
+              <div className="form-group">
+                <label style={{ display: 'block', marginBottom: '0.5rem' }}>Plate Number</label>
+                <input type="text" className="form-control" value={editFormData.vehiclePlate} onChange={e => setEditFormData({ ...editFormData, vehiclePlate: e.target.value })} style={{ width: '100%', padding: '0.75rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', color: 'var(--text-main)' }} />
+              </div>
+            </div>
+
+            <button onClick={handleSaveDriver} disabled={isSavingDriver} className="btn btn-primary" style={{ width: '100%', padding: '0.75rem' }}>
+              {isSavingDriver ? <><Loader2 size={16} className="animate-spin" /> Saving...</> : 'Save Captain Changes'}
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Delete Captain Confirmation */}
+      {isDeleteDriverModalOpen && createPortal(
+        <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>
+          <div className="glass-panel animate-fade-in" style={{ width: '380px', padding: '2rem', textAlign: 'center', background: 'var(--bg-main)' }}>
+            <Trash2 size={48} color="var(--danger)" style={{ marginBottom: '1rem' }} />
+            <h2 style={{ fontSize: '1.25rem', marginBottom: '0.5rem' }}>Are you sure?</h2>
+            <p style={{ color: 'var(--text-muted)', marginBottom: '1.5rem', fontSize: '0.95rem', lineHeight: 1.5 }}>
+              Are you sure you want to delete this captain? This action cannot be undone.
+            </p>
+            {driverDeleteError && (
+              <div style={{ background: 'rgba(239, 68, 68, 0.1)', color: 'var(--danger)', border: '1px solid rgba(239, 68, 68, 0.3)', padding: '0.75rem', borderRadius: '8px', marginBottom: '1rem', display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem' }}>
+                <AlertCircle size={16} />
+                {driverDeleteError}
+              </div>
+            )}
+            <div style={{ display: 'flex', gap: '1rem' }}>
+              <button onClick={() => setIsDeleteDriverModalOpen(false)} className="btn btn-outline" style={{ flex: 1, padding: '0.75rem' }} disabled={isDeletingDriver}>Cancel</button>
+              <button onClick={handleDeleteDriver} className="btn btn-primary" style={{ flex: 1, padding: '0.75rem', background: 'var(--danger)', boxShadow: '0 4px 15px rgba(239, 68, 68, 0.3)' }} disabled={isDeletingDriver}>
+                {isDeletingDriver ? <Loader2 size={16} className="animate-spin" /> : 'Delete'}
               </button>
             </div>
           </div>
