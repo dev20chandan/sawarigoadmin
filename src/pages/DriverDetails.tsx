@@ -541,20 +541,33 @@ const DriverDetails = () => {
             <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '2rem' }}>No rides found for this driver.</div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '500px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-              {driverRides.map((r: any) => (
-                <div key={r.id} onClick={() => navigate('/rides/' + r.id)} style={{ padding: '1rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="hover-highlight">
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.9rem' }}>{new Date(r.createdAt).toLocaleString()}</div>
-                    <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
-                      <span className={`badge ${(r.status || 'PENDING').toLowerCase()}`}>{r.status}</span>
+              {driverRides.map((r: any) => {
+                const uniqueRideId = r.rideCode || r.uniqueRideId || r.bookingId || ('SRG-' + (r.id?.length > 8 ? r.id.slice(-6).toUpperCase() : r.id));
+                const vehicleName = r.vehicleName || r.vehicleModel || driver?.vehicleDetails?.model || driver?.vehicle || 'Standard Ride';
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => navigate('/rides/' + r.id, { state: { ride: r } })}
+                    style={{ padding: '1rem', background: 'var(--input-bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    className="hover-highlight"
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.2rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--accent-primary)', fontSize: '0.9rem' }}>{uniqueRideId}</span>
+                        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>• {vehicleName}</span>
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>
+                        {new Date(r.createdAt).toLocaleString()}
+                        <span className={`badge ${(r.status || 'PENDING').toLowerCase()}`} style={{ marginLeft: '0.5rem' }}>{r.status}</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                      <div style={{ color: 'var(--success)', fontWeight: 'bold' }}>₹{r.fare || 0}</div>
+                      <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{r.distance || '0'} km</div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-                    <div style={{ color: 'var(--success)', fontWeight: 'bold' }}>₹{r.fare || 0}</div>
-                    <div style={{ color: 'var(--text-muted)', fontSize: '0.8rem' }}>{r.distance || '0'} km</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

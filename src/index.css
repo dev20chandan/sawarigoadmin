@@ -561,7 +561,7 @@ body {
 /* Dashboard Grid */
 .dashboard-grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 2rem;
 }
@@ -806,9 +806,15 @@ select option {
 }
 
 /* Responsive Breakpoints */
-@media (max-width: 1024px) {
+@media (max-width: 1200px) {
   .dashboard-grid {
     grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 900px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

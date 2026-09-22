@@ -1,17 +1,28 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Search, Loader2, Edit, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Search, Loader2, Edit, Trash2, X, AlertCircle, Users, Car, ArrowRight, CheckCircle } from 'lucide-react';
 import { SmartAvatar } from '../App';
 import type { RootState, AppDispatch } from '../store';
 import { fetchUsers, deleteUser, updateUser } from '../store/userSlice';
-import { useNavigate } from 'react-router-dom';
+import { fetchDrivers } from '../store/driverSlice';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const UserList = () => {
   const dispatch = useDispatch<AppDispatch>();
   const navigate = useNavigate();
-  const { users, loading, error } = useSelector((state: RootState) => state.users);
+  const location = useLocation();
+  const { users, loading: usersLoading, error } = useSelector((state: RootState) => state.users);
+  const { drivers, loading: driversLoading } = useSelector((state: RootState) => state.drivers);
+
   const [search, setSearch] = useState('');
+  const [activeTab, setActiveTab] = useState<'all' | 'incomplete_users' | 'incomplete_drivers'>(() => {
+    if (location.state?.filter === 'INCOMPLETE') {
+      return location.state.activeTab === 'drivers' ? 'incomplete_drivers' : 'incomplete_users';
+    }
+    return 'all';
+  });
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [userToDelete, setUserToDelete] = useState<string | null>(null);
@@ -24,12 +35,39 @@ const UserList = () => {
 
   useEffect(() => {
     dispatch(fetchUsers());
+    dispatch(fetchDrivers());
   }, [dispatch]);
 
-  const filteredUsers = users.filter(u =>
+  // Handle location state updates if user navigates back and forth
+  useEffect(() => {
+    if (location.state?.filter === 'INCOMPLETE') {
+      setActiveTab(location.state.activeTab === 'drivers' ? 'incomplete_drivers' : 'incomplete_users');
+    }
+  }, [location.state]);
+
+  const isIncompleteUser = (u: any) =>
+    !u.profile?.name || !u.profile?.email || u.status === 'PENDING' || !u.phoneNumber;
+
+  const isIncompleteDriver = (d: any) =>
+    !d.name || !d.phone || d.status === 'PENDING' || d.status === 'INCOMPLETE' || !d.vehicleDetails?.plateNumber || !d.vehicle;
+
+  const incompleteUsers = users.filter(isIncompleteUser);
+  const incompleteDrivers = drivers.filter(isIncompleteDriver);
+
+  // Users displayed based on active tab
+  const baseUsers = activeTab === 'incomplete_users' ? incompleteUsers : users;
+
+  const filteredUsers = baseUsers.filter(u =>
     (u.phoneNumber || '').includes(search) ||
     (u.profile?.name && u.profile.name.toLowerCase().includes(search.toLowerCase())) ||
     (u.userCode && u.userCode.toLowerCase().includes(search.toLowerCase()))
+  );
+
+  const filteredIncompleteDrivers = incompleteDrivers.filter(d =>
+    (d.name || '').toLowerCase().includes(search.toLowerCase()) ||
+    (d.phone || d.phoneNumber || '').includes(search) ||
+    (d.userCode || '').toLowerCase().includes(search.toLowerCase()) ||
+    (d.vehicleDetails?.plateNumber || '').toLowerCase().includes(search.toLowerCase())
   );
 
   const confirmDelete = async () => {
@@ -67,7 +105,9 @@ const UserList = () => {
     }
   };
 
-  if (loading && users.length === 0) {
+  const loading = activeTab === 'incomplete_drivers' ? driversLoading : usersLoading;
+
+  if (loading && users.length === 0 && drivers.length === 0) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
         <Loader2 className="animate-spin" size={32} color="var(--accent-primary)" />
@@ -81,93 +121,258 @@ const UserList = () => {
 
   return (
     <div className="animate-fade-in">
-      <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '2rem' }}>
+      
+      {/* Top Controls: Tabs + Search */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '1rem' }}>
+        
+        {/* Tab Controls */}
+        <div style={{ display: 'flex', gap: '0.5rem', background: 'var(--input-bg)', padding: '0.3rem', borderRadius: '10px', border: '1px solid var(--border)' }}>
+          <button
+            onClick={() => setActiveTab('all')}
+            style={{
+              padding: '0.45rem 1rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: activeTab === 'all' ? 'var(--accent-primary)' : 'transparent',
+              color: activeTab === 'all' ? 'white' : 'var(--text-muted)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Users size={16} /> All Users ({users.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('incomplete_users')}
+            style={{
+              padding: '0.45rem 1rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: activeTab === 'incomplete_users' ? 'var(--danger)' : 'transparent',
+              color: activeTab === 'incomplete_users' ? 'white' : 'var(--text-muted)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Users size={16} /> Incomplete Users ({incompleteUsers.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('incomplete_drivers')}
+            style={{
+              padding: '0.45rem 1rem',
+              borderRadius: '8px',
+              border: 'none',
+              background: activeTab === 'incomplete_drivers' ? '#f59e0b' : 'transparent',
+              color: activeTab === 'incomplete_drivers' ? 'white' : 'var(--text-muted)',
+              fontWeight: 600,
+              fontSize: '0.85rem',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.2s'
+            }}
+          >
+            <Car size={16} /> Incomplete Drivers ({incompleteDrivers.length})
+          </button>
+        </div>
+
+        {/* Search */}
         <div style={{ display: 'flex', gap: '1rem' }}>
-          <div className="form-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem' }}>
+          <div className="form-control" style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.45rem 1rem', borderRadius: '30px' }}>
             <Search size={18} color="var(--text-muted)" />
             <input
               type="text"
-              placeholder="Search by code, name, or phone..."
+              placeholder={activeTab === 'incomplete_drivers' ? "Search incomplete drivers..." : "Search by code, name, or phone..."}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', outline: 'none' }}
+              style={{ background: 'transparent', border: 'none', color: 'var(--text-main)', outline: 'none', minWidth: '220px' }}
             />
           </div>
         </div>
       </div>
 
-      <div className="glass-panel table-container">
-        <table>
-          <thead>
-            <tr>
-              <th style={{ width: '60px', textAlign: 'center', whiteSpace: 'nowrap' }}>User Code</th>
-              <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
-              <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>User Name</th>
-              <th style={{ textAlign: 'center' }}>Mobile</th>
-              <th style={{ textAlign: 'center' }}>Email</th>
-              <th style={{ textAlign: 'center' }}>Status</th>
-              <th style={{ textAlign: 'center' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredUsers.map((user, index) => {
-              const fallbackCode = `U-${String(index + 1).padStart(2, '0')}`;
-              const resolvedCode = user.userCode || fallbackCode;
-              return (
-                <tr
-                  key={user.id}
-                  onClick={() => navigate('/users/' + user.id, { state: { user: { ...user, resolvedCode } } })}
-                  style={{ cursor: 'pointer' }}
-                  className="hover-highlight"
-                >
-                  <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--accent-primary)' }}>
-                    {resolvedCode}
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
-                      <SmartAvatar src={user.profile?.image} name={user.profile?.name || 'User'} size={36} />
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
-                    <div style={{ fontWeight: 500, color: 'var(--text-main)', textTransform: 'capitalize' }} title={user.profile?.name || 'Not Provided'}>
-                      {((user.profile?.name || 'Not Provided').length > 25 ? (user.profile?.name || 'Not Provided').substring(0, 25) + '...' : (user.profile?.name || 'Not Provided'))}
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>{user.phoneNumber}</td>
-                  <td style={{ textAlign: 'center' }}>{user.profile?.email || '-'}</td>
-                  <td style={{ textAlign: 'center' }}>
-                    <span className={`badge ${(user.status || 'PENDING').toLowerCase()}`}>
-                      {user.status || 'PENDING'}
-                    </span>
-                  </td>
-                  <td style={{ textAlign: 'center' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                      <button onClick={(e) => {
-                        e.stopPropagation();
-                        setEditingUser(user);
-                        setFormData({ name: user.profile?.name || '', email: user.profile?.email || '', gender: user.profile?.gender || '', status: user.status || 'ACTIVE', phoneNumber: user.phoneNumber || '' });
-                        setSaveError(null);
-                        setSuccessMsg('');
-                        setIsModalOpen(true);
-                      }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} title="Edit User">
-                        <Edit size={16} />
+      {/* Table Display */}
+      {activeTab === 'incomplete_drivers' ? (
+        /* Incomplete Drivers Table */
+        <div className="glass-panel table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style={{ width: '60px', textAlign: 'center', whiteSpace: 'nowrap' }}>Dr Code</th>
+                <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
+                <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Driver Name</th>
+                <th style={{ textAlign: 'center' }}>Mobile</th>
+                <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>Vehicle</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th style={{ textAlign: 'center' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredIncompleteDrivers.map((driver: any, index: number) => {
+                const driverCode = driver.userCode || `D-${String(index + 1).padStart(2, '0')}`;
+                return (
+                  <tr
+                    key={driver.id}
+                    onClick={() => navigate(`/drivers/${driver.id}`, { state: { driver } })}
+                    style={{ cursor: 'pointer' }}
+                    className="hover-highlight"
+                  >
+                    <td style={{ textAlign: 'center', color: 'var(--text-muted)', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                      {driverCode}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', justifyContent: 'center' }}>
+                        <SmartAvatar src={driver.profile?.image || driver.image} name={driver.name || 'Driver'} size={36} />
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
+                      <div style={{ fontWeight: 600, color: 'var(--text-main)' }}>
+                        {driver.name || <span style={{ color: 'var(--danger)', fontStyle: 'italic' }}>Name Missing</span>}
+                      </div>
+                      <div style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>{driver.profile?.email || 'No email provided'}</div>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      {driver.phone || driver.phoneNumber || '-'}
+                    </td>
+                    <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
+                      <div style={{ fontWeight: 500, fontSize: '0.88rem' }}>
+                        {driver.vehicleDetails?.type || driver.vehicle || <span style={{ color: 'var(--danger)' }}>No Vehicle Details</span>}
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                        {driver.vehicleDetails?.plateNumber || 'No plate registered'}
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge ${driver.status?.toLowerCase() || 'pending'}`} style={{ textTransform: 'capitalize' }}>
+                        {driver.status?.toLowerCase() || 'incomplete'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <button
+                        className="btn btn-primary"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          navigate(`/drivers/${driver.id}`, { state: { driver } });
+                        }}
+                        style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                      >
+                        Review <ArrowRight size={14} />
                       </button>
-                      <button onClick={(e) => { e.stopPropagation(); setUserToDelete(user.id); setDeleteError(null); }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', color: 'var(--danger)', borderColor: 'var(--danger)', fontSize: '0.8rem' }} title="Delete User">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredIncompleteDrivers.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    No incomplete drivers found matching criteria.
                   </td>
                 </tr>
-              );
-            })}
-            {filteredUsers.length === 0 && (
+              )}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        /* Users Table (All or Incomplete Users) */
+        <div className="glass-panel table-container">
+          <table>
+            <thead>
               <tr>
-                <td colSpan={7} style={{ textAlign: 'center', padding: '2rem' }}>No users found</td>
+                <th style={{ width: '60px', textAlign: 'center', whiteSpace: 'nowrap' }}>User Code</th>
+                <th style={{ width: '60px', textAlign: 'center' }}>Image</th>
+                <th style={{ textAlign: 'left', paddingLeft: '1rem' }}>User Name</th>
+                <th style={{ textAlign: 'center' }}>Mobile</th>
+                <th style={{ textAlign: 'center' }}>Email</th>
+                <th style={{ textAlign: 'center' }}>Status</th>
+                <th style={{ textAlign: 'center' }}>Actions</th>
               </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user, index) => {
+                const fallbackCode = `U-${String(index + 1).padStart(2, '0')}`;
+                const resolvedCode = user.userCode || fallbackCode;
+                const isIncomplete = isIncompleteUser(user);
+                return (
+                  <tr
+                    key={user.id}
+                    onClick={() => navigate('/users/' + user.id, { state: { user: { ...user, resolvedCode } } })}
+                    style={{ cursor: 'pointer' }}
+                    className="hover-highlight"
+                  >
+                    <td style={{ textAlign: 'center', fontWeight: 600, color: 'var(--accent-primary)' }}>
+                      {resolvedCode}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <SmartAvatar src={user.profile?.image} name={user.profile?.name || 'User'} size={36} />
+                      </div>
+                    </td>
+                    <td style={{ textAlign: 'left', paddingLeft: '1rem' }}>
+                      <div style={{ fontWeight: 500, color: 'var(--text-main)', textTransform: 'capitalize' }} title={user.profile?.name || 'Not Provided'}>
+                        {user.profile?.name ? (
+                          user.profile.name.length > 25 ? user.profile.name.substring(0, 25) + '...' : user.profile.name
+                        ) : (
+                          <span style={{ color: 'var(--danger)', fontStyle: 'italic' }}>Name Not Provided</span>
+                        )}
+                      </div>
+                      {isIncomplete && (
+                        <span style={{ fontSize: '0.72rem', color: 'var(--danger)', fontWeight: 500 }}>
+                          Incomplete Profile
+                        </span>
+                      )}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>{user.phoneNumber || '-'}</td>
+                    <td style={{ textAlign: 'center' }}>
+                      {user.profile?.email || <span style={{ color: 'var(--text-muted)' }}>-</span>}
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <span className={`badge ${(user.status || 'PENDING').toLowerCase()}`}>
+                        {user.status || 'PENDING'}
+                      </span>
+                    </td>
+                    <td style={{ textAlign: 'center' }}>
+                      <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
+                        <button onClick={(e) => {
+                          e.stopPropagation();
+                          setEditingUser(user);
+                          setFormData({ name: user.profile?.name || '', email: user.profile?.email || '', gender: user.profile?.gender || '', status: user.status || 'ACTIVE', phoneNumber: user.phoneNumber || '' });
+                          setSaveError(null);
+                          setSuccessMsg('');
+                          setIsModalOpen(true);
+                        }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', fontSize: '0.8rem' }} title="Edit User">
+                          <Edit size={16} />
+                        </button>
+                        <button onClick={(e) => { e.stopPropagation(); setUserToDelete(user.id); setDeleteError(null); }} className="btn btn-outline" style={{ padding: '0.4rem 0.6rem', color: 'var(--danger)', borderColor: 'var(--danger)', fontSize: '0.8rem' }} title="Delete User">
+                          <Trash2 size={16} />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan={7} style={{ textAlign: 'center', padding: '2.5rem', color: 'var(--text-muted)' }}>
+                    {activeTab === 'incomplete_users' ? 'No incomplete users found' : 'No users found'}
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {isModalOpen && editingUser && createPortal(
         <div style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0, background: 'rgba(0,0,0,0.5)', zIndex: 9999, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(5px)' }}>

@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useDispatch, useSelector } from 'react-redux';
@@ -109,14 +109,19 @@ const DriverVerification = () => {
       d.phone?.includes(searchTerm) ||
       d.vehicle?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       d.userCode?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = filterStatus === 'ALL' || (d.status && d.status.toUpperCase() === filterStatus);
+    
+    let matchesStatus = true;
+    if (filterStatus === 'ONLINE') {
+      matchesStatus = d.isOnline === true || d.status === 'ONLINE' || d.driverStatus === 'ONLINE';
+    } else if (filterStatus !== 'ALL') {
+      matchesStatus = (d.status && d.status.toUpperCase() === filterStatus);
+    }
+
     return matchesSearch && matchesStatus;
   });
 
   const totalPages = Math.ceil(filteredDrivers.length / itemsPerPage);
   const paginatedDrivers = filteredDrivers.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
-
-
 
   const confirmStatusUpdate = async () => {
     if (!statusToUpdate) return;
@@ -156,6 +161,7 @@ const DriverVerification = () => {
             style={{ padding: '0.5rem 1rem', background: 'var(--input-bg)', color: 'var(--text-main)', border: '1px solid var(--border)', outline: 'none' }}
           >
             <option value="ALL">All Statuses</option>
+            <option value="ONLINE">Online Drivers</option>
             <option value="APPROVED">Approved</option>
             <option value="PENDING">Pending</option>
             <option value="REJECTED">Rejected</option>

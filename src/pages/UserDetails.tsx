@@ -1,9 +1,9 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { useDispatch } from 'react-redux';
 import axiosInstance from '../utils/axiosInstance';
-import { ArrowLeft, Car, Loader2, Edit, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react';
+import { Car, Loader2, Edit, Trash2, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { SmartAvatar } from '../App';
 import type { AppDispatch } from '../store';
 import { deleteUser, updateUser, fetchUsers } from '../store/userSlice';
@@ -108,10 +108,7 @@ const UserDetails = () => {
   return (
     <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
       <div style={{ marginBottom: '1.5rem', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '1rem' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-          <button onClick={() => navigate('/users')} className="btn btn-outline" style={{ padding: '0.4rem 0.8rem', fontSize: '0.9rem' }}>
-            <ArrowLeft size={18} /> Back
-          </button>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
           <h1 style={{ fontSize: '1.5rem', fontWeight: 600, margin: 0, display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
             User Details
             <span className={`badge ${(user.status || 'PENDING').toLowerCase()}`}>
@@ -197,20 +194,33 @@ const UserDetails = () => {
             </div>
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '450px', overflowY: 'auto', paddingRight: '0.5rem' }}>
-              {userRides.map((r: any) => (
-                <div key={r.id} onClick={() => navigate('/rides/' + r.id)} style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }} className="hover-highlight">
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: '0.95rem' }}>{new Date(r.createdAt).toLocaleString()}</div>
-                    <div style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '0.3rem' }}>
-                      <span className={`badge ${(r.status || 'PENDING').toLowerCase()}`}>{r.status}</span>
+              {userRides.map((r: any) => {
+                const uniqueRideId = r.rideCode || r.uniqueRideId || r.bookingId || ('SRG-' + (r.id?.length > 8 ? r.id.slice(-6).toUpperCase() : r.id));
+                const vehicleName = r.vehicleName || r.vehicleModel || r.driver?.vehicles?.[0]?.model || r.vehicleType || 'Standard Ride';
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => navigate('/rides/' + r.id, { state: { ride: r } })}
+                    style={{ padding: '1.25rem', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                    className="hover-highlight"
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginBottom: '0.25rem' }}>
+                        <span style={{ fontWeight: 600, color: 'var(--accent-primary)', fontSize: '0.92rem' }}>{uniqueRideId}</span>
+                        <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>• {vehicleName}</span>
+                      </div>
+                      <div style={{ fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                        {new Date(r.createdAt).toLocaleString()}
+                        <span className={`badge ${(r.status || 'PENDING').toLowerCase()}`} style={{ marginLeft: '0.6rem' }}>{r.status}</span>
+                      </div>
+                    </div>
+                    <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
+                       <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '1.1rem' }}>₹{r.fare || 0}</div>
+                       <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{r.distance || '0'} km</div>
                     </div>
                   </div>
-                  <div style={{ textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.25rem' }}>
-                     <div style={{ color: 'var(--accent-primary)', fontWeight: 'bold', fontSize: '1.1rem' }}>₹{r.fare || 0}</div>
-                     <div style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>{r.distance || '0'} km</div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

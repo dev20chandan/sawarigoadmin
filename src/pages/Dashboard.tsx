@@ -1,17 +1,37 @@
 import { useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useDispatch, useSelector } from 'react-redux';
-import { Users, Car, CheckCircle, Loader2, CircleDot } from 'lucide-react';
+import { Users, Car, CheckCircle, Loader2, CircleDot, Route as RouteIcon } from 'lucide-react';
 import type { RootState, AppDispatch } from '../store';
 import { fetchDashboardStats } from '../store/dashboardSlice';
+import { fetchRides } from '../store/rideSlice';
+import { fetchDrivers } from '../store/driverSlice';
+import { fetchUsers } from '../store/userSlice';
 
 const Dashboard = () => {
   const dispatch = useDispatch<AppDispatch>();
   const { stats, loading, error } = useSelector((state: RootState) => state.dashboard);
+  const { meta: ridesMeta } = useSelector((state: RootState) => state.rides);
+  const { drivers } = useSelector((state: RootState) => state.drivers);
+  const { users } = useSelector((state: RootState) => state.users);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
+    dispatch(fetchRides({ page: 1, limit: 1 }));
+    dispatch(fetchDrivers());
+    dispatch(fetchUsers());
   }, [dispatch]);
+
+  const totalRidesCount = stats?.totalRides ?? stats?.ridesCount ?? ridesMeta?.total ?? 0;
+  const totalUsersCount = (stats?.totalUsers !== undefined && stats.totalUsers > 0) ? stats.totalUsers : (users?.length || 0);
+  const totalDriversCount = (stats?.totalDrivers !== undefined && stats.totalDrivers > 0) ? stats.totalDrivers : (drivers?.length || 0);
+  const onlineDriversCount = (stats?.activeDrivers !== undefined && stats.activeDrivers > 0)
+    ? stats.activeDrivers
+    : (drivers?.filter((d: any) => d.isOnline === true || d.status === 'ONLINE' || d.driverStatus === 'ONLINE').length || 0);
+
+  const incompleteUsersCount = users?.filter((u: any) => !u.profile?.name || !u.profile?.email || u.status === 'PENDING' || !u.phoneNumber).length || 0;
+  const incompleteDriversCount = drivers?.filter((d: any) => !d.name || !d.profile?.email || d.status === 'PENDING' || !d.phoneNumber).length || 0;
+  const incompleteCount = stats?.incompleteProfiles ?? (incompleteUsersCount + incompleteDriversCount);
 
   if (loading && !stats) {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
@@ -27,36 +47,49 @@ const Dashboard = () => {
     <div className="animate-fade-in">
 
       <div className="dashboard-grid">
+        {/* Total Rides */}
+        <Link to="/rides" state={{ filterStatus: 'ALL' }} className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+          <div className="stat-header">
+            <span>Total Rides</span>
+            <RouteIcon color="var(--accent-primary)" />
+          </div>
+          <div className="stat-value">{totalRidesCount}</div>
+        </Link>
+
+        {/* Total Users */}
         <Link to="/users" className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
           <div className="stat-header">
             <span>Total Users</span>
             <Users color="var(--accent-primary)" />
           </div>
-          <div className="stat-value">{stats?.totalUsers || 0}</div>
+          <div className="stat-value">{totalUsersCount}</div>
         </Link>
 
+        {/* Total Drivers */}
         <Link to="/drivers" className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
           <div className="stat-header">
             <span>Total Drivers</span>
             <Car color="var(--text-muted)" />
           </div>
-          <div className="stat-value">{stats?.totalDrivers || 0}</div>
+          <div className="stat-value">{totalDriversCount}</div>
         </Link>
 
-        <Link to="/drivers" state={{ filterStatus: 'APPROVED' }} className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+        {/* Online Drivers */}
+        <Link to="/drivers" state={{ filterStatus: 'ONLINE' }} className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
           <div className="stat-header">
             <span>Online Drivers</span>
             <CircleDot color="var(--success)" strokeWidth={3} absoluteStrokeWidth />
           </div>
-          <div className="stat-value">{stats?.activeDrivers || 0}</div>
+          <div className="stat-value">{onlineDriversCount}</div>
         </Link>
 
-        <Link to="/users" className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+        {/* Incomplete Profiles */}
+        <Link to="/users" state={{ filter: 'INCOMPLETE', activeTab: 'users' }} className="glass-panel stat-card" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
           <div className="stat-header">
             <span>Incomplete Profiles</span>
             <CheckCircle color="var(--danger)" />
           </div>
-          <div className="stat-value">{stats?.incompleteProfiles || 0}</div>
+          <div className="stat-value">{incompleteCount}</div>
         </Link>
       </div>
 

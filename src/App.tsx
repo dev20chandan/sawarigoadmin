@@ -143,6 +143,9 @@ const HeaderBar = ({
               src="/favicon.png"
               alt="Sawarigo Logo"
               style={{ width: '32px', height: '32px', objectFit: 'contain', marginRight: '-0.50rem' }}
+              onError={(e) => {
+                (e.currentTarget as HTMLImageElement).src = '/logo.png';
+              }}
             />
             <span>
               <span style={{ color: 'var(--text-main)' }}>awari</span>
@@ -179,14 +182,6 @@ const HeaderBar = ({
       </div>
 
       <div className="header-right">
-        <button
-          onClick={toggleTheme}
-          className="theme-toggle-btn"
-          title={`Switch to ${theme === 'light' ? 'Dark' : 'Light'} Mode`}
-        >
-          {theme === 'light' ? <Moon size={18} /> : <Sun size={18} />}
-        </button>
-
         <TopBarUserWidget
           adminName={profile?.name || profile?.username}
           adminImage={profile?.image}
